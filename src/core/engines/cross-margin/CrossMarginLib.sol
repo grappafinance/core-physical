@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IGrappa} from "../../../interfaces/IGrappa.sol";
+import {IPomace} from "../../../interfaces/IPomace.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 
@@ -131,20 +131,20 @@ library CrossMarginLib {
 
     ///@dev Settles the accounts longs and shorts
     ///@param account CrossMarginAccount storage that will be updated in-place
-    function settleAtExpiry(CrossMarginAccount storage account, IGrappa grappa)
+    function settleAtExpiry(CrossMarginAccount storage account, IPomace pomace)
         external
         returns (Balance[] memory longPayouts, Balance[] memory shortPayouts)
     {
         // settling longs first as they can only increase collateral
-        longPayouts = _settleLongs(grappa, account);
+        longPayouts = _settleLongs(pomace, account);
         // settling shorts last as they can only reduce collateral
-        shortPayouts = _settleShorts(grappa, account);
+        shortPayouts = _settleShorts(pomace, account);
     }
 
     ///@dev Settles the accounts longs, adding collateral to balances
-    ///@param grappa interface to settle long options in a batch call
+    ///@param pomace interface to settle long options in a batch call
     ///@param account CrossMarginAccount memory that will be updated in-place
-    function _settleLongs(IGrappa grappa, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
+    function _settleLongs(IPomace pomace, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
         uint256 i;
         uint256[] memory tokenIds;
         uint256[] memory amounts;
@@ -165,7 +165,7 @@ library CrossMarginLib {
         }
 
         if (tokenIds.length > 0) {
-            payouts = grappa.batchSettleOptions(address(this), tokenIds, amounts);
+            payouts = pomace.batchSettleOptions(address(this), tokenIds, amounts);
 
             for (i = 0; i < payouts.length;) {
                 // add the collateral in the account storage.
@@ -179,9 +179,9 @@ library CrossMarginLib {
     }
 
     ///@dev Settles the accounts shorts, reserving collateral for ITM options
-    ///@param grappa interface to get short option payouts in a batch call
+    ///@param pomace interface to get short option payouts in a batch call
     ///@param account CrossMarginAccount memory that will be updated in-place
-    function _settleShorts(IGrappa grappa, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
+    function _settleShorts(IPomace pomace, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
         uint256 i;
         uint256[] memory tokenIds;
         uint256[] memory amounts;
@@ -202,7 +202,7 @@ library CrossMarginLib {
         }
 
         if (tokenIds.length > 0) {
-            payouts = grappa.batchGetPayouts(tokenIds, amounts);
+            payouts = pomace.batchGetPayouts(tokenIds, amounts);
 
             for (i = 0; i < payouts.length;) {
                 // remove the collateral in the account storage.

@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 enum TokenType {
     PUT,
-    PUT_SPREAD,
-    CALL,
-    CALL_SPREAD
+    CALL
 }
 
 /**
@@ -16,8 +14,6 @@ enum ActionType {
     RemoveCollateral,
     MintShort,
     BurnShort,
-    MergeOptionToken, // These actions are defined in "DebitSpread"
-    SplitOptionToken, // These actions are defined in "DebitSpread"
     AddLong,
     RemoveLong,
     SettleAccount,

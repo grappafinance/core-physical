@@ -4,12 +4,11 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import "forge-std/Test.sol";
 
-import {Grappa} from "../../core/Grappa.sol";
-import {GrappaProxy} from "../../core/GrappaProxy.sol";
+import {Pomace} from "../../core/Pomace.sol";
+import {PomaceProxy} from "../../core/PomaceProxy.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
-import {MockOracle} from "../mocks/MockOracle.sol";
 
-import {MockGrappaV2} from "../mocks/MockGrappaV2.sol";
+import {MockPomaceV2} from "../mocks/MockPomaceV2.sol";
 
 import "../../config/errors.sol";
 import "../../config/enums.sol";
@@ -18,18 +17,18 @@ import "../../config/constants.sol";
 /**
  * @dev test on implementation contract
  */
-contract GrappaProxyTest is Test {
-    Grappa public implementation;
-    Grappa public grappa;
+contract PomaceProxyTest is Test {
+    Pomace public implementation;
+    Pomace public pomace;
     MockERC20 private weth;
 
     constructor() {
         weth = new MockERC20("WETH", "WETH", 18);
 
-        implementation = new Grappa(address(0));
-        bytes memory data = abi.encode(Grappa.initialize.selector);
+        implementation = new Pomace(address(0));
+        bytes memory data = abi.encode(Pomace.initialize.selector);
 
-        grappa = Grappa(address(new GrappaProxy(address(implementation), data)));
+        pomace = Pomace(address(new PomaceProxy(address(implementation), data)));
     }
 
     function testImplementationContractOwnerIsZero() public {
@@ -42,35 +41,35 @@ contract GrappaProxyTest is Test {
     }
 
     function testProxyOwnerIsSelf() public {
-        assertEq(grappa.owner(), address(this));
+        assertEq(pomace.owner(), address(this));
     }
 
     function testProxyIsInitialized() public {
         vm.expectRevert("Initializable: contract is already initialized");
-        grappa.initialize();
+        pomace.initialize();
     }
 
     function testCannotUpgradeFromNonOwner() public {
         vm.prank(address(0xaa));
         vm.expectRevert("Ownable: caller is not the owner");
-        grappa.upgradeTo(address(1));
+        pomace.upgradeTo(address(1));
     }
 
     function testCanUpgradeToAnotherUUPSContract() public {
-        MockGrappaV2 v2 = new MockGrappaV2();
+        MockPomaceV2 v2 = new MockPomaceV2();
 
-        grappa.upgradeTo(address(v2));
+        pomace.upgradeTo(address(v2));
 
-        assertEq(MockGrappaV2(address(grappa)).version(), 2);
+        assertEq(MockPomaceV2(address(pomace)).version(), 2);
     }
 
     function testCannotUpgradeTov3() public {
-        MockGrappaV2 v2 = new MockGrappaV2();
-        MockGrappaV2 v3 = new MockGrappaV2();
+        MockPomaceV2 v2 = new MockPomaceV2();
+        MockPomaceV2 v3 = new MockPomaceV2();
 
-        grappa.upgradeTo(address(v2));
+        pomace.upgradeTo(address(v2));
 
         vm.expectRevert("not upgrdable anymore");
-        grappa.upgradeTo(address(v3));
+        pomace.upgradeTo(address(v3));
     }
 }

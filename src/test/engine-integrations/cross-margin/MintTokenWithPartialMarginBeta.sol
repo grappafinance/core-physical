@@ -23,11 +23,11 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     uint8 internal usdtId;
 
     // usdc strike & sdyc collateralized  call / put
-    uint40 internal pidSdycCollat;
-    uint40 internal pidUsdtSdycCollat;
+    uint32 internal pidSdycCollat;
+    uint32 internal pidUsdtSdycCollat;
 
     // eth strike & lsEth collateralized call / put
-    uint40 internal pidLsEthCollat;
+    uint32 internal pidLsEthCollat;
 
     uint256 public expiry;
 
@@ -41,18 +41,18 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         usdt = new MockERC20("USDT", "USDT", 6);
         vm.label(address(usdt), "USDT");
 
-        sdycId = grappa.registerAsset(address(sdyc));
-        lsEthId = grappa.registerAsset(address(lsEth));
-        usdtId = grappa.registerAsset(address(usdt));
+        sdycId = pomace.registerAsset(address(sdyc));
+        lsEthId = pomace.registerAsset(address(lsEth));
+        usdtId = pomace.registerAsset(address(usdt));
 
         engine.setPartialMarginMask(address(weth), address(lsEth), true);
         engine.setPartialMarginMask(address(usdc), address(sdyc), true);
         engine.setPartialMarginMask(address(usdc), address(usdt), true);
         engine.setPartialMarginMask(address(usdt), address(sdyc), true);
 
-        pidSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(sdyc));
-        pidUsdtSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdt), address(sdyc));
-        pidLsEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(lsEth));
+        pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));
+        pidUsdtSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdt), address(sdyc));
+        pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
 
         sdyc.mint(address(this), 1000_000 * 1e6);
         sdyc.approve(address(engine), type(uint256).max);
@@ -64,8 +64,6 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         lsEth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
     }
 
     function testRemovePartialMarginMask() public {

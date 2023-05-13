@@ -21,8 +21,8 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
     uint8 internal lsEthId;
     uint8 internal sdycId;
 
-    uint40 internal pidLsEthCollat;
-    uint40 internal pidSdycCollat;
+    uint32 internal pidLsEthCollat;
+    uint32 internal pidSdycCollat;
 
     uint256 public expiry;
 
@@ -33,14 +33,14 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         sdyc = new MockERC20("SDYC", "SDYC", 6);
         vm.label(address(sdyc), "SDYC");
 
-        lsEthId = grappa.registerAsset(address(lsEth));
-        sdycId = grappa.registerAsset(address(sdyc));
+        lsEthId = pomace.registerAsset(address(lsEth));
+        sdycId = pomace.registerAsset(address(sdyc));
 
         engine.setPartialMarginMask(address(weth), address(lsEth), true);
         engine.setPartialMarginMask(address(usdc), address(sdyc), true);
 
-        pidLsEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(lsEth));
-        pidSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(sdyc));
+        pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
+        pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));
 
         lsEth.mint(address(this), 100 * 1e18);
         lsEth.approve(address(engine), type(uint256).max);
@@ -49,11 +49,6 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         sdyc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
-        oracle.setSpotPrice(address(lsEth), 3000 * UNIT);
-
-        oracle.setSpotPrice(address(sdyc), 1 * UNIT);
     }
 
     function testCallITM() public {
@@ -71,15 +66,12 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 wethExpiryPrice = 5000 * UNIT;
         uint256 lsEthExpiryPrice = 5200 * UNIT; // staked eth worth more due to rewards
 
-        oracle.setExpiryPrice(address(weth), address(usdc), wethExpiryPrice);
-        oracle.setExpiryPrice(address(lsEth), address(usdc), lsEthExpiryPrice);
-
         vm.warp(expiry);
 
         uint256 lsEthBefore = lsEth.balanceOf(alice);
         uint256 expectedPayout = (wethExpiryPrice - strikePrice) * UNIT / lsEthExpiryPrice * (depositAmount / UNIT);
 
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
 
         uint256 lsEthAfter = lsEth.balanceOf(alice);
         assertEq(lsEthAfter, lsEthBefore + expectedPayout);
@@ -108,15 +100,12 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 wethExpiryPrice = 1000 * UNIT;
         uint256 sdycExpiryPrice = 1_040000; // worth more due to interest ($1.04)
 
-        oracle.setExpiryPrice(address(weth), address(usdc), wethExpiryPrice);
-        oracle.setExpiryPrice(address(sdyc), address(usdc), sdycExpiryPrice);
-
         vm.warp(expiry);
 
         uint256 sdycBefore = sdyc.balanceOf(alice);
         uint256 expectedPayout = (strikePrice - wethExpiryPrice) * UNIT / sdycExpiryPrice;
 
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
 
         uint256 sdycAfter = sdyc.balanceOf(alice);
         assertEq(sdycAfter, sdycBefore + expectedPayout);

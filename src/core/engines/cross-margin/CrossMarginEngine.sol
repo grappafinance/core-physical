@@ -41,7 +41,7 @@ import "../../../config/errors.sol";
  * @notice  Fully collateralized margin engine
  *             Users can deposit collateral into Cross Margin and mint optionTokens (debt) out of it.
  *             Interacts with OptionToken to mint / burn
- *             Interacts with grappa to fetch registered asset info
+ *             Interacts with pomace to fetch registered asset info
  */
 contract CrossMarginEngine is
     OptionTransferable,
@@ -66,6 +66,9 @@ contract CrossMarginEngine is
     ///     subAccount can be an address similar to the primary account, but has the last 8 bits different.
     ///     this give every account access to 256 sub-accounts
     mapping(address => CrossMarginAccount) internal accounts;
+
+    /// @dev token => PhysicalSettlementTracker
+    mapping(uint256 => PhysicalSettlementTracker) public tokenTracker;
 
     ///@dev contract that verifies permissions
     ///     if not set allows anyone to transact
@@ -92,7 +95,7 @@ contract CrossMarginEngine is
     //////////////////////////////////////////////////////////////*/
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(address _grappa, address _optionToken) BaseEngine(_grappa, _optionToken) initializer {}
+    constructor(address _pomace, address _optionToken) BaseEngine(_pomace, _optionToken) initializer {}
 
     /*///////////////////////////////////////////////////////////////
                             Initializer
@@ -172,18 +175,74 @@ contract CrossMarginEngine is
     }
 
     /**
+     * @dev hook to be invoked by Grappa to handle custom logic of settlement
+     */
+    function handleExercise(uint256 _tokenId, uint256 _debtPaid, uint256 _amountPaidOut)
+        external
+        override(BaseEngine, IMarginEngine)
+    {
+        _checkIsPomace();
+
+        tokenTracker[_tokenId].totalDebt += _debtPaid.toUint80();
+        tokenTracker[_tokenId].totalPaid += _amountPaidOut.toUint80();
+    }
+
+    /**
+     * @dev gets the amount of debts and payouts that should be recorded for given short position amounts
+     * @dev this function should only be used after expiry to properly socialise all exercised amount to all physical settled options
+     */
+    function getBatchSettlementForShorts(uint256[] calldata _tokenIds, uint256[] calldata _amounts)
+        external
+        view
+        returns (Balance[] memory debts, Balance[] memory payouts)
+    {
+        // payouts and debts will be 0 for physical settlement options because it has
+        // passed the settlement window
+        (debts, payouts) = pomace.batchGetDebtAndPayouts(_tokenIds, _amounts);
+
+        for (uint256 i; i < _tokenIds.length;) {
+            PhysicalSettlementTracker memory tracker = tokenTracker[_tokenIds[i]];
+
+            // if the token is physical settled and someone exercised within exercise window
+            // we socialized the payout and debt (total amount paid out and received during exercise window)
+            if (tracker.totalDebt > 0) {
+                (Balance memory debt, Balance memory payout) = _socializeSettlement(tracker, _tokenIds[i], _amounts[i]);
+                debts = _addToBalances(debts, debt.collateralId, debt.amount);
+                payouts = _addToBalances(payouts, payout.collateralId, payout.amount);
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /**
      * @notice payout to user on settlement.
      * @dev this can only triggered by Grappa, would only be called on settlement.
+     * @param _asset asset to transfer
+     * @param _sender sender of debt
+     * @param _amount amount
+     */
+    function receiveDebtValue(address _asset, address _sender, uint256 _amount) external {
+        _checkPermissioned(_sender);
+
+        _receiveDebtValue(_asset, _sender, _amount);
+    }
+
+    /**
+     * @notice payout to user on settlement.
+     * @dev this can only triggered by Pomace, would only be called on settlement.
      * @param _asset asset to transfer
      * @param _recipient receiver
      * @param _amount amount
      */
-    function payCashValue(address _asset, address _recipient, uint256 _amount) public override(BaseEngine, IMarginEngine) {
+    function sendPayoutValue(address _asset, address _recipient, uint256 _amount) external {
         if (_recipient == address(this)) return;
 
         _checkPermissioned(_recipient);
 
-        BaseEngine.payCashValue(_asset, _recipient, _amount);
+        _sendPayoutValue(_asset, _recipient, _amount);
     }
 
     /**
@@ -220,8 +279,8 @@ contract CrossMarginEngine is
     function setPartialMarginMask(address _assetX, address _assetY, bool _value) external {
         _checkOwner();
 
-        uint256 collateralId = grappa.assetIds(_assetX);
-        uint256 mask = 1 << (grappa.assetIds(_assetY) & 0xff);
+        uint256 collateralId = pomace.assetIds(_assetX);
+        uint256 mask = 1 << (pomace.assetIds(_assetY) & 0xff);
 
         if (_value) partialMarginMasks[collateralId] |= mask;
         else partialMarginMasks[collateralId] &= ~mask;
@@ -263,7 +322,7 @@ contract CrossMarginEngine is
      * @param _assetY the id of an asset
      */
     function getPartialMarginMask(address _assetX, address _assetY) external view returns (bool) {
-        return _getPartialMarginMask(grappa.assetIds(_assetX), grappa.assetIds(_assetY));
+        return _getPartialMarginMask(pomace.assetIds(_assetX), pomace.assetIds(_assetY));
     }
 
     /**
@@ -280,7 +339,7 @@ contract CrossMarginEngine is
      */
     function _settle(address _subAccount) internal override {
         // update the account in state
-        (, Balance[] memory shortPayouts) = accounts[_subAccount].settleAtExpiry(grappa);
+        (, Balance[] memory shortPayouts) = accounts[_subAccount].settleAtExpiry(pomace);
         emit AccountSettled(_subAccount, shortPayouts);
     }
 
@@ -397,7 +456,7 @@ contract CrossMarginEngine is
         uint8 engineId = tokenId.parseEngineId();
 
         // in the future reference a whitelist of engines
-        if (engineId != grappa.engineIds(address(this))) revert CM_Not_Authorized_Engine();
+        if (engineId != pomace.engineIds(address(this))) revert CM_Not_Authorized_Engine();
     }
 
     /**
@@ -461,7 +520,7 @@ contract CrossMarginEngine is
      * @dev get minimum collateral requirement for an account
      */
     function _getMinCollateral(CrossMarginAccount memory account) internal view returns (Balance[] memory) {
-        return CrossMarginMath.getMinCollateralForPositions(grappa, account.shorts, account.longs);
+        return CrossMarginMath.getMinCollateralForPositions(pomace, account.shorts, account.longs);
     }
 
     /**
@@ -472,5 +531,45 @@ contract CrossMarginEngine is
 
         uint256 mask = 1 << (_assetIdY & 0xff);
         return partialMarginMasks[_assetIdX] & mask != 0;
+    }
+
+    function _socializeSettlement(PhysicalSettlementTracker memory tracker, uint256 tokenId, uint256 shortAmount)
+        internal
+        pure
+        returns (Balance memory debt, Balance memory payout)
+    {
+        (TokenType tokenType, uint32 productId,,,) = TokenIdUtil.parseTokenId(tokenId);
+        (, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
+
+        if (tokenType == TokenType.CALL) {
+            debt.collateralId = strikeId;
+            payout.collateralId = underlyingId;
+        } else if (tokenType == TokenType.PUT) {
+            debt.collateralId = underlyingId;
+            payout.collateralId = strikeId;
+        }
+        debt.amount = (tracker.totalDebt * shortAmount / tracker.issued).toUint80();
+        payout.amount = (tracker.totalPaid * shortAmount / tracker.issued).toUint80();
+    }
+
+    /**
+     * @dev add an entry to array of Balance
+     * @param balances existing payout array
+     * @param _asset new collateralId
+     * @param _amount new payout
+     */
+    function _addToBalances(Balance[] memory balances, uint8 _asset, uint256 _amount)
+        internal
+        pure
+        returns (Balance[] memory newBalances)
+    {
+        (bool found, uint256 index) = balances.indexOf(_asset);
+
+        uint80 balance = _amount.toUint80();
+
+        if (!found) balances = balances.append(Balance(_asset, balance));
+        else balances[index].amount += balance;
+
+        return balances;
     }
 }

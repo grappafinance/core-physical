@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../config/types.sol";
 
-interface IGrappa {
+interface IPomace {
     function getDetailFromProductId(uint40 _productId)
         external
         view
@@ -32,17 +32,22 @@ interface IGrappa {
 
     function oracles(uint8 _id) external view returns (address oracle);
 
-    function getPayout(uint256 tokenId, uint64 amount)
+    function getDebtAndPayout(uint256 tokenId, uint64 amount)
         external
         view
-        returns (address engine, address collateral, uint256 payout);
+        returns (address engine, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout);
+
+    function batchGetDebtAndPayouts(uint256[] calldata tokenId, uint256[] calldata amount)
+        external
+        view
+        returns (Balance[] memory debts, Balance[] memory payouts);
 
     function getProductId(address oracle, address engine, address underlying, address strike, address collateral)
         external
         view
         returns (uint40 id);
 
-    function getTokenId(TokenType tokenType, uint40 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
+    function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
         external
         view
         returns (uint256 id);

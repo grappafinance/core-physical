@@ -9,9 +9,9 @@ import "../config/errors.sol";
 /**
  * Token ID =
  *
- *  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
- *  | tokenType (24 bits) | productId (40 bits) | expiry (64 bits) | longStrike (64 bits) | reserved    (64 bits) |
- *  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
+ *  * ------------------- | ------------------- | ---------------- | ---------------- | -------------------------- *
+ *  | tokenType (32 bits) | productId (32 bits) | expiry (64 bits) | strike (64 bits) | settlementWindow (64 bits) |
+ *  * ------------------- | ------------------- | ---------------- | ---------------- | -------------------------- *
  */
 
 library TokenIdUtil {
@@ -20,18 +20,18 @@ library TokenIdUtil {
      * @param tokenType TokenType enum
      * @param productId if of the product
      * @param expiry timestamp of option expiry
-     * @param longStrike strike price of the long option, with 6 decimals
-     * @param reserved strike price of the short (upper bond for call and lower bond for put) if this is a spread. 6 decimals
+     * @param strike strike price of the long option, with 6 decimals
+     * @param settlementWindow time after expiry in which the option can be exercised
      * @return tokenId token id
      */
-    function getTokenId(TokenType tokenType, uint40 productId, uint64 expiry, uint64 longStrike, uint64 reserved)
+    function getTokenId(TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 settlementWindow)
         internal
         pure
         returns (uint256 tokenId)
     {
         unchecked {
-            tokenId = (uint256(tokenType) << 232) + (uint256(productId) << 192) + (uint256(expiry) << 128)
-                + (uint256(longStrike) << 64) + uint256(reserved);
+            tokenId = (uint256(tokenType) << 226) + (uint256(productId) << 192) + (uint256(expiry) << 128)
+                + (uint256(strike) << 64) + uint256(settlementWindow);
         }
     }
 
@@ -42,21 +42,21 @@ library TokenIdUtil {
      * @return tokenType TokenType enum
      * @return productId 32 bits product id
      * @return expiry timestamp of option expiry
-     * @return longStrike strike price of the long option, with 6 decimals
-     * @return reserved strike price of the short (upper bond for call and lower bond for put) if this is a spread. 6 decimals
+     * @return strike strike price of the long option, with 6 decimals
+     * @return settlementWindow time after expiry in which the option can be exercised
      */
     function parseTokenId(uint256 tokenId)
         internal
         pure
-        returns (TokenType tokenType, uint40 productId, uint64 expiry, uint64 longStrike, uint64 reserved)
+        returns (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 settlementWindow)
     {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            tokenType := shr(232, tokenId)
+            tokenType := shr(226, tokenId)
             productId := shr(192, tokenId)
             expiry := shr(128, tokenId)
-            longStrike := shr(64, tokenId)
-            reserved := tokenId
+            strike := shr(64, tokenId)
+            settlementWindow := tokenId
         }
     }
 
@@ -114,47 +114,5 @@ library TokenIdUtil {
         }
 
         expired = block.timestamp >= expiry;
-    }
-
-    /**
-     * @notice convert an spread tokenId back to put or call.
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     * @dev   oldId =   | spread type (24 b)  | productId (40 bits) | expiry (64 bits) | longStrike (64 bits) | shortStrike (64 bits) |
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     * @dev   newId =   | call or put type    | productId (40 bits) | expiry (64 bits) | longStrike (64 bits) | 0           (64 bits) |
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     * @dev   this function will: override tokenType, remove shortStrike.
-     * @param _tokenId token id to change
-     */
-    function convertToVanillaId(uint256 _tokenId) internal pure returns (uint256 newId) {
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            newId := shr(64, _tokenId) // step 1: >> 64 to wipe out shortStrike
-            newId := shl(64, newId) // step 2: << 64 go back
-
-            newId := sub(newId, shl(232, 1)) // step 3: new tokenType = spread type - 1
-        }
-    }
-
-    /**
-     * @notice convert an spread tokenId back to put or call.
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     * @dev   oldId =   | call or put type    | productId (40 bits) | expiry (64 bits) | longStrike (64 bits) | 0           (64 bits) |
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     * @dev   newId =   | spread type         | productId (40 bits) | expiry (64 bits) | longStrike (64 bits) | shortStrike (64 bits) |
-     *                  * ------------------- | ------------------- | ---------------- | -------------------- | --------------------- *
-     *
-     * this function convert put or call type to spread type, add shortStrike.
-     * @param _tokenId token id to change
-     * @param _shortStrike strike to add
-     */
-    function convertToSpreadId(uint256 _tokenId, uint256 _shortStrike) internal pure returns (uint256 newId) {
-        // solhint-disable-next-line no-inline-assembly
-        unchecked {
-            newId = _tokenId + _shortStrike;
-            return newId + (1 << 232); // new type (spread type) = old type + 1
-        }
     }
 }

@@ -10,7 +10,7 @@ import "../../../config/types.sol";
 import "../../../config/constants.sol";
 import "../../../config/errors.sol";
 
-contract BaseDebitSpreadEngineFlow is MockedBaseEngineSetup {
+contract BaseEngineFlow is MockedBaseEngineSetup {
     address public random = address(0xaabb);
 
     event AccountSettledSingle(address subAccount, uint8 collateralId, int256 payout);
@@ -129,54 +129,6 @@ contract BaseDebitSpreadEngineFlow is MockedBaseEngineSetup {
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createBurnAction(tokenId, random, amount);
         vm.expectRevert(BM_InvalidFromAddress.selector);
-        engine.execute(address(this), actions);
-    }
-
-    function testSplitActionShouldMintToken() public {
-        uint256 expiry = block.timestamp + 1 days;
-        uint256 strikePrice = 4000 * UNIT;
-        uint256 strikePriceHigher = 5000 * UNIT;
-        uint256 amount = 1 * UNIT;
-
-        uint256 spreadId = getTokenId(TokenType.CALL_SPREAD, productId, expiry, strikePrice, strikePriceHigher);
-
-        uint256 expectedLong = getTokenId(TokenType.CALL, productId, expiry, strikePriceHigher, 0);
-
-        ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createSplitAction(spreadId, amount, address(this));
-        engine.execute(address(this), actions);
-
-        assertEq(option.balanceOf(address(this), expectedLong), amount);
-    }
-
-    function testMergeActionShouldBurnToken() public {
-        uint256 expiry = block.timestamp + 1 days;
-        uint256 strikePrice = 4000 * UNIT;
-        uint256 amount = 1 * UNIT;
-        uint256 tokenId = getTokenId(TokenType.CALL, productId, expiry, strikePrice, 0);
-        uint256 shortId = getTokenId(TokenType.CALL, productId, expiry, strikePrice + 1, 0);
-
-        // prepare: mint 4000 call option to this address
-        ActionArgs[] memory _actions = new ActionArgs[](1);
-        _actions[0] = createMintAction(tokenId, address(this), amount);
-        engine.execute(address(this), _actions);
-
-        // execute merge
-        ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createMergeAction(tokenId, shortId, address(this), amount);
-        engine.execute(address(this), actions);
-
-        assertEq(option.balanceOf(address(this), tokenId), 0);
-    }
-
-    function testCannotMergeWithSameStrike() public {
-        uint256 amount = 1 * UNIT;
-        uint256 tokenId = _getDefaultCallId();
-
-        // execute merge
-        ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createMergeAction(tokenId, tokenId, address(this), amount);
-        vm.expectRevert(BM_MergeWithSameStrike.selector);
         engine.execute(address(this), actions);
     }
 

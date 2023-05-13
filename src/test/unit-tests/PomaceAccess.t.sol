@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {FullMarginFixture} from "../engine-integrations/full-margin/FullMarginFixture.t.sol";
+import {CrossMarginFixture} from "../engine-integrations/cross-margin/CrossMarginFixture.t.sol";
 
 import "../../config/types.sol";
 import "../../config/errors.sol";
 
-contract GrappaAccessTest is FullMarginFixture {
+contract PomaceAccessTest is CrossMarginFixture {
     uint256 private depositAmount = 100 * 1e6;
 
     address private subAccountIdToModify;

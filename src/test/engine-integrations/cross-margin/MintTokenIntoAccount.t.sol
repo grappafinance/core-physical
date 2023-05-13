@@ -25,8 +25,6 @@ contract TestMintIntoAccount_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
     }
 
     function testMintIntoAccountCall() public {

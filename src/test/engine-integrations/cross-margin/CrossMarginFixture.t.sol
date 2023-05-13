@@ -4,14 +4,12 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
 import "../../mocks/MockERC20.sol";
-import "../../mocks/MockOracle.sol";
 import "../../mocks/MockWhitelist.sol";
-import "../../mocks/MockChainlinkAggregator.sol";
 
 import "../../../core/engines/cross-margin/CrossMarginEngine.sol";
 import "../../../core/engines/cross-margin/CrossMarginEngineProxy.sol";
-import "../../../core/Grappa.sol";
-import "../../../core/GrappaProxy.sol";
+import "../../../core/Pomace.sol";
+import "../../../core/PomaceProxy.sol";
 import "../../../core/OptionToken.sol";
 
 import "../../../config/enums.sol";
@@ -28,13 +26,11 @@ import {ActionHelper} from "../../shared/ActionHelper.sol";
  */
 abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
     CrossMarginEngine internal engine;
-    Grappa internal grappa;
+    Pomace internal pomace;
     OptionToken internal option;
 
     MockERC20 internal usdc;
     MockERC20 internal weth;
-
-    MockOracle internal oracle;
 
     MockWhitelist internal whitelist;
 
@@ -43,16 +39,15 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
     address internal bob;
 
     // usdc collateralized call / put
-    uint40 internal pidUsdcCollat;
+    uint32 internal pidUsdcCollat;
 
     // eth collateralized call / put
-    uint40 internal pidEthCollat;
+    uint32 internal pidEthCollat;
 
     uint8 internal usdcId;
     uint8 internal wethId;
 
     uint8 internal engineId;
-    uint8 internal oracleId;
 
     constructor() {
         usdc = new MockERC20("USDC", "USDC", 6); // nonce: 1
@@ -61,37 +56,37 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         weth = new MockERC20("WETH", "WETH", 18); // nonce: 2
         vm.label(address(weth), "WETH");
 
-        oracle = new MockOracle(); // nonce: 3
-
         // predict address of margin account and use it here
-        address grappaAddr = predictAddress(address(this), 6);
+        address pomaceAddr = predictAddress(address(this), 6);
 
-        option = new OptionToken(grappaAddr, address(0)); // nonce: 4
+        option = new OptionToken(pomaceAddr, address(0)); // nonce: 3
+        vm.label(address(option), "OptionToken");
 
-        address grappaImplementation = address(new Grappa(address(option))); // nonce: 5
+        address pomaceImplementation = address(new Pomace(address(option))); // nonce: 4
 
-        bytes memory grappaData = abi.encode(Grappa.initialize.selector);
+        bytes memory pomaceData = abi.encode(Pomace.initialize.selector);
 
-        grappa = Grappa(address(new GrappaProxy(grappaImplementation, grappaData))); // 6
+        pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 5
+        vm.label(address(pomace), "Pomace");
 
-        address engineImplementation = address(new CrossMarginEngine(address(grappa), address(option))); // nonce 7
+        address engineImplementation = address(new CrossMarginEngine(address(pomace), address(option))); // nonce 6
 
         bytes memory engineData = abi.encode(CrossMarginEngine.initialize.selector);
 
-        engine = CrossMarginEngine(address(new CrossMarginEngineProxy(engineImplementation, engineData))); // 8
+        engine = CrossMarginEngine(address(new CrossMarginEngineProxy(engineImplementation, engineData))); // 7
+        vm.label(address(engine), "CrossMarginEngine");
 
         whitelist = new MockWhitelist();
+        vm.label(address(whitelist), "Whitelist");
 
         // register products
-        usdcId = grappa.registerAsset(address(usdc));
-        wethId = grappa.registerAsset(address(weth));
+        usdcId = pomace.registerAsset(address(usdc));
+        wethId = pomace.registerAsset(address(weth));
 
-        engineId = grappa.registerEngine(address(engine));
+        engineId = pomace.registerEngine(address(engine));
 
-        oracleId = grappa.registerOracle(address(oracle));
-
-        pidUsdcCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(usdc));
-        pidEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(weth));
+        pidUsdcCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(usdc));
+        pidEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(weth));
 
         charlie = address(0xcccc);
         vm.label(charlie, "Charlie");

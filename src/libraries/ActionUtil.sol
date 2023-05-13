@@ -110,33 +110,6 @@ library ActionUtil {
     }
 
     /**
-     * @param tokenId option token id of the incoming option token.
-     * @param shortId the currently shorted "option token id" to merge the option token into
-     * @param amount amount to merge
-     * @param from which address to burn the incoming option from.
-     */
-    function createMergeAction(uint256 tokenId, uint256 shortId, uint256 amount, address from)
-        internal
-        pure
-        returns (ActionArgs memory action)
-    {
-        action = ActionArgs({action: ActionType.MergeOptionToken, data: abi.encode(tokenId, shortId, from, amount)});
-    }
-
-    /**
-     * @param spreadId current shorted "spread option id"
-     * @param amount amount to split
-     * @param recipient address to receive the "split" long option token.
-     */
-    function createSplitAction(uint256 spreadId, uint256 amount, address recipient)
-        internal
-        pure
-        returns (ActionArgs memory action)
-    {
-        action = ActionArgs({action: ActionType.SplitOptionToken, data: abi.encode(spreadId, uint64(amount), recipient)});
-    }
-
-    /**
      * @param tokenId option token to be added to the account
      * @param amount amount to add
      * @param from address to pull the token from

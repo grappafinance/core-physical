@@ -8,7 +8,6 @@ import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {OptionTokenDescriptor} from "../../core/OptionTokenDescriptor.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
-import {MockOracle} from "../mocks/MockOracle.sol";
 
 import {MockTokenDescriptorV2} from "../mocks/MockOptionTokenDescriptorV2.sol";
 
@@ -55,8 +54,8 @@ contract OptionProxyTest is Test {
     }
 
     function testGetUrl() public {
-        assertEq(descriptor.tokenURI(0), "https://grappa.finance/token/0");
-        assertEq(descriptor.tokenURI(200), "https://grappa.finance/token/200");
+        assertEq(descriptor.tokenURI(0), "https://pomace.finance/token/0");
+        assertEq(descriptor.tokenURI(200), "https://pomace.finance/token/200");
     }
 
     function testCanUpgradeToAnotherUUPSContract() public {
@@ -64,7 +63,7 @@ contract OptionProxyTest is Test {
 
         descriptor.upgradeTo(address(v2));
 
-        assertEq(descriptor.tokenURI(0), "https://grappa.finance/token/v2/0");
-        assertEq(descriptor.tokenURI(200), "https://grappa.finance/token/v2/200");
+        assertEq(descriptor.tokenURI(0), "https://pomace.finance/token/v2/0");
+        assertEq(descriptor.tokenURI(200), "https://pomace.finance/token/v2/200");
     }
 }

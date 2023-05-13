@@ -24,7 +24,7 @@ contract TestRemoveLong_CM is CrossMarginFixture {
 
         expiry = block.timestamp + 1 days;
 
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
+
     }
 
     function testRemoveLongToken() public {

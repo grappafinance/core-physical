@@ -35,8 +35,6 @@ contract Permissioned is CrossMarginFixture {
         expiry = block.timestamp + 14 days;
 
         tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
     }
 
     function testCannotExecute() public {
@@ -64,13 +62,11 @@ contract Permissioned is CrossMarginFixture {
 
         _mintOptionToAlice();
 
-        oracle.setExpiryPrice(address(weth), address(usdc), 5000 * UNIT);
-
         vm.warp(expiry);
 
         vm.startPrank(alice);
         vm.expectRevert(NoAccess.selector);
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
     }
 
     function testAliceCanSettleOption() public {
@@ -79,12 +75,10 @@ contract Permissioned is CrossMarginFixture {
 
         _mintOptionToAlice();
 
-        oracle.setExpiryPrice(address(weth), address(usdc), 5000 * UNIT);
-
         vm.warp(expiry);
 
         vm.startPrank(alice);
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
         vm.stopPrank();
     }
 

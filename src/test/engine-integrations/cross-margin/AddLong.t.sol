@@ -23,8 +23,6 @@ contract TestAddLong_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 1 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
     }
 
     function testAddLongCallToken() public {

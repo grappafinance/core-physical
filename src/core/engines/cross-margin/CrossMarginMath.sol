@@ -6,8 +6,7 @@ import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 import {IntArrayLib} from "array-lib/IntArrayLib.sol";
 import {QuickSort} from "array-lib/sorting/QuickSort.sol";
 
-import {IGrappa} from "../../../interfaces/IGrappa.sol";
-import {IOracle} from "../../../interfaces/IOracle.sol";
+import {IPomace} from "../../../interfaces/IPomace.sol";
 
 // shard libraries
 import {NumberUtil} from "../../../libraries/NumberUtil.sol";
@@ -49,18 +48,18 @@ library CrossMarginMath {
     /**
      * @notice get minimum collateral for a given amount of shorts & longs
      * @dev typically used for calculating a portfolios margin requirements
-     * @param grappa interface to query grappa contract
+     * @param pomace interface to query pomace contract
      * @param shorts is array of Position structs
      * @param longs is array of Position structs
      * @return amounts is an array of Balance struct representing full collateralization
      */
-    function getMinCollateralForPositions(IGrappa grappa, Position[] calldata shorts, Position[] calldata longs)
+    function getMinCollateralForPositions(IPomace pomace, Position[] calldata shorts, Position[] calldata longs)
         external
         view
         returns (Balance[] memory amounts)
     {
         // groups shorts and longs by underlying + strike + collateral + expiry
-        CrossMarginDetail[] memory details = _getPositionDetails(grappa, shorts, longs);
+        CrossMarginDetail[] memory details = _getPositionDetails(pomace, shorts, longs);
 
         // portfolio has no longs or shorts
         if (details.length == 0) return amounts;
@@ -334,7 +333,7 @@ library CrossMarginMath {
     /**
      * @notice  converts Position struct arrays to in-memory detail struct arrays
      */
-    function _getPositionDetails(IGrappa grappa, Position[] calldata shorts, Position[] calldata longs)
+    function _getPositionDetails(IPomace pomace, Position[] calldata shorts, Position[] calldata longs)
         internal
         view
         returns (CrossMarginDetail[] memory details)
@@ -348,9 +347,9 @@ library CrossMarginMath {
         uint256 shortLength = shorts.length;
 
         for (uint256 i; i < positions.length;) {
-            (, uint40 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
+            (, uint32 productId, uint64 expiry,,) = positions[i].tokenId.parseTokenId();
 
-            ProductDetails memory product = _getProductDetails(grappa, productId);
+            ProductDetails memory product = _getProductDetails(pomace, productId);
 
             bytes32 pos = keccak256(abi.encode(product.underlyingId, product.strikeId, expiry));
 
@@ -429,13 +428,13 @@ library CrossMarginMath {
     }
 
     /**
-     * @notice gets product asset specific details from grappa in one call
+     * @notice gets product asset specific details from pomace in one call
      */
-    function _getProductDetails(IGrappa grappa, uint40 productId) internal view returns (ProductDetails memory info) {
-        (,, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
+    function _getProductDetails(IPomace pomace, uint32 productId) internal view returns (ProductDetails memory info) {
+        (, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
 
         (,, address underlying, uint8 underlyingDecimals, address strike, uint8 strikeDecimals,,) =
-            grappa.getDetailFromProductId(productId);
+            pomace.getDetailFromProductId(productId);
 
         info.underlying = underlying;
         info.underlyingId = underlyingId;

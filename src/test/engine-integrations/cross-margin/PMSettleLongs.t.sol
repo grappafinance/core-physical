@@ -37,8 +37,6 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
 
         tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
 
-        oracle.setSpotPrice(address(weth), 2000 * UNIT);
-
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](2);
         _actions[0] = createAddCollateralAction(wethId, alice, depositAmount);
@@ -55,8 +53,6 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
     }
 
     function testSettleLongCallITMIncreasesCollateral() public {
-        oracle.setExpiryPrice(address(weth), address(usdc), 8000 * UNIT);
-
         uint256 balanceBefore = weth.balanceOf(address(engine));
 
         (, Position[] memory beforeLongs, Balance[] memory beforeCollaters) = engine.marginAccounts(address(this));
@@ -93,8 +89,6 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
 
         vm.warp(expiry);
 
-        oracle.setExpiryPrice(address(weth), address(usdc), 8000 * UNIT);
-
         uint256 balanceBefore = weth.balanceOf(address(engine));
 
         (, Position[] memory beforeLongs, Balance[] memory beforeCollaters) = engine.marginAccounts(address(this));
@@ -119,8 +113,6 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
     }
 
     function testSettleLongCallOTMNoIncreaseInCollateral() public {
-        oracle.setExpiryPrice(address(weth), address(usdc), 3000 * UNIT);
-
         uint256 balanceBefore = weth.balanceOf(address(engine));
 
         (, Position[] memory beforeLongs, Balance[] memory beforeCollaters) = engine.marginAccounts(address(this));
@@ -155,8 +147,6 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
 
         vm.warp(expiry);
 
-        oracle.setExpiryPrice(address(weth), address(usdc), 3000 * UNIT);
-
         uint256 balanceBefore = weth.balanceOf(address(engine));
 
         (, Position[] memory beforeLongs, Balance[] memory beforeCollaters) = engine.marginAccounts(address(this));
@@ -190,8 +180,6 @@ contract TestPMSettleLongCallsCM is CrossMarginFixture {
         engine.execute(alice, _actions);
 
         vm.warp(expiry);
-
-        oracle.setExpiryPrice(address(weth), address(usdc), 3000 * UNIT);
 
         uint256 balanceBefore = weth.balanceOf(address(engine));
 
@@ -242,8 +230,6 @@ contract TestPMSettleLongPutsCM is CrossMarginFixture {
 
         tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
 
-        oracle.setSpotPrice(address(weth), 4000 * UNIT);
-
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](2);
         _actions[0] = createAddCollateralAction(usdcId, alice, depositAmount);
@@ -260,7 +246,7 @@ contract TestPMSettleLongPutsCM is CrossMarginFixture {
     }
 
     function testSettleLongCallITMIncreasesCollateral() public {
-        oracle.setExpiryPrice(address(weth), address(usdc), 1000 * UNIT);
+
 
         uint256 balanceBefore = usdc.balanceOf(address(engine));
 
@@ -286,7 +272,7 @@ contract TestPMSettleLongPutsCM is CrossMarginFixture {
     }
 
     function testSettleLongCallOTMNoIncreaseInCollateral() public {
-        oracle.setExpiryPrice(address(weth), address(usdc), 4000 * UNIT);
+
 
         uint256 balanceBefore = usdc.balanceOf(address(engine));
 

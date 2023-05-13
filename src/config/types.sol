@@ -5,7 +5,7 @@ import "./enums.sol";
 
 /**
  * @dev struct representing the current balance for a given collateral
- * @param collateralId grappa asset id
+ * @param collateralId pomace asset id
  * @param amount amount the asset
  */
 struct Balance {
@@ -21,8 +21,6 @@ struct Balance {
  * @param collateralDecimals collateral asset decimals
  */
 struct ProductDetails {
-    address oracle;
-    uint8 oracleId;
     address engine;
     uint8 engineId;
     address underlying;

@@ -39,7 +39,6 @@ contract TestTransfer_CM is CrossMarginFixture {
 
         c5000 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 5000 * UNIT, 0);
 
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
 
         ActionArgs[] memory aliceActions = new ActionArgs[](2);
         aliceActions[0] = createAddCollateralAction(wethId, alice, depositAmount);

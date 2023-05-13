@@ -25,8 +25,6 @@ contract TestMint_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
     }
 
     function testMintCall() public {
@@ -124,7 +122,7 @@ contract TestMint_CM is CrossMarginFixture {
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createMintAction(tokenId, address(this), amount);
 
-        vm.expectRevert(GP_InvalidExpiry.selector);
+        vm.expectRevert(PM_InvalidExpiry.selector);
         engine.execute(address(this), actions);
     }
 
@@ -170,42 +168,6 @@ contract TestMint_CM is CrossMarginFixture {
         actions[0] = createMintAction(tokenId, address(this), amount);
 
         vm.expectRevert(BM_AccountUnderwater.selector);
-        engine.execute(address(this), actions);
-    }
-
-    function testCannotMintCallSpread() public {
-        uint256 longStrike = 2800 * UNIT;
-        uint256 shortStrike = 2600 * UNIT;
-
-        uint256 depositAmount = longStrike - shortStrike;
-
-        uint256 amount = 1 * UNIT;
-
-        uint256 tokenId = getTokenId(TokenType.CALL_SPREAD, pidUsdcCollat, expiry, longStrike, shortStrike);
-
-        ActionArgs[] memory actions = new ActionArgs[](2);
-        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
-        actions[1] = createMintAction(tokenId, address(this), amount);
-
-        vm.expectRevert(CM_UnsupportedTokenType.selector);
-        engine.execute(address(this), actions);
-    }
-
-    function testCannotMintPutSpread() public {
-        uint256 longStrike = 2800 * UNIT;
-        uint256 shortStrike = 2600 * UNIT;
-
-        uint256 depositAmount = longStrike - shortStrike;
-
-        uint256 amount = 1 * UNIT;
-
-        uint256 tokenId = getTokenId(TokenType.PUT_SPREAD, pidUsdcCollat, expiry, longStrike, shortStrike);
-
-        ActionArgs[] memory actions = new ActionArgs[](2);
-        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
-        actions[1] = createMintAction(tokenId, address(this), amount);
-
-        vm.expectRevert(CM_UnsupportedTokenType.selector);
         engine.execute(address(this), actions);
     }
 }

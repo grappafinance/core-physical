@@ -38,8 +38,6 @@ contract TestBatchExecute_CM is CrossMarginFixture {
 
         tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
         tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice * 2, 0);
-
-        oracle.setSpotPrice(address(weth), 2000 * UNIT);
     }
 
     function testMintTwoSidedStructure() public {

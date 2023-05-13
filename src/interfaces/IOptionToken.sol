@@ -21,20 +21,20 @@ interface IOptionToken {
     function burn(address _from, uint256 _tokenId, uint256 _amount) external;
 
     /**
-     * @dev burn option token from an address. Can only be called by grappa, used for settlement
+     * @dev burn option token from an address. Can only be called by pomace, used for settlement
      * @param _from         account to burn from
      * @param _tokenId      tokenId to burn
      * @param _amount       amount to burn
      *
      */
-    function burnGrappaOnly(address _from, uint256 _tokenId, uint256 _amount) external;
+    function burnPomaceOnly(address _from, uint256 _tokenId, uint256 _amount) external;
 
     /**
-     * @dev burn batch of option token from an address. Can only be called by grappa
+     * @dev burn batch of option token from an address. Can only be called by pomace
      * @param _from         account to burn from
      * @param _ids          tokenId to burn
      * @param _amounts      amount to burn
      *
      */
-    function batchBurnGrappaOnly(address _from, uint256[] memory _ids, uint256[] memory _amounts) external;
+    function batchBurnPomaceOnly(address _from, uint256[] memory _ids, uint256[] memory _amounts) external;
 }

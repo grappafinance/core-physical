@@ -29,8 +29,6 @@ contract TestPMRemoveCollateral_CM is CrossMarginFixture {
         vm.stopPrank();
 
         expiry = block.timestamp + 1 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
     }
 
     function testEqualShortLongAllowCollateralWithdraw() public {

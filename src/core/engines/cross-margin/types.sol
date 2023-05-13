@@ -25,9 +25,9 @@ struct CrossMarginAccount {
  * @param putStrikes            strikes of put options held in account (shorts and longs)
  * @param callWeights           amount of call options held in account (shorts and longs)
  * @param callStrikes           strikes of call options held in account (shorts and longs)
- * @param underlyingId          grappa id for underlying asset
+ * @param underlyingId          pomace id for underlying asset
  * @param underlyingDecimals    decimal points of underlying asset
- * @param numeraireId           grappa id for numeraire (aka strike) asset
+ * @param numeraireId           pomace id for numeraire (aka strike) asset
  * @param numeraireDecimals     decimal points of numeraire (aka strike) asset
  * @param spotPrice             current spot price of underlying in terms of strike asset
  * @param expiry                expiry of the option
@@ -46,10 +46,16 @@ struct CrossMarginDetail {
 
 /**
  * @dev an uncompressed Position struct, expanding tokenId to uint256
- * @param tokenId grappa option token id
+ * @param tokenId pomace option token id
  * @param amount number option tokens
  */
 struct Position {
     uint256 tokenId;
     uint64 amount;
+}
+
+struct PhysicalSettlementTracker {
+    uint64 issued;
+    uint80 totalDebt;
+    uint80 totalPaid;
 }

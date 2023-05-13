@@ -29,7 +29,7 @@ contract CrossEngineGenernal is CrossMarginFixture {
     }
 
     function testCannotCallAddLongWithNotAuthorizedEngine() public {
-        uint40 productId = grappa.getProductId(address(oracle), address(0), address(weth), address(usdc), address(usdc));
+        uint32 productId = pomace.getProductId(address(0), address(weth), address(usdc), address(usdc));
 
         uint256 tokenId = getTokenId(TokenType.CALL, productId, block.timestamp + 1 days, 0, 0);
 
@@ -50,7 +50,7 @@ contract CrossEngineGenernal is CrossMarginFixture {
 
     function testCannotCallPayoutFromAnybody() public {
         vm.expectRevert(NoAccess.selector);
-        engine.payCashValue(address(usdc), address(this), UNIT);
+        engine.sendPayoutValue(address(usdc), address(this), UNIT);
     }
 
     function testGetMinCollateral() public {

@@ -8,7 +8,7 @@ import "../../libraries/TokenIdUtil.sol";
 import "../../libraries/ActionUtil.sol";
 
 abstract contract ActionHelper {
-    function getTokenId(TokenType tokenType, uint40 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
+    function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
         internal
         pure
         returns (uint256 tokenId)
@@ -19,7 +19,7 @@ abstract contract ActionHelper {
     function parseTokenId(uint256 tokenId)
         internal
         pure
-        returns (TokenType tokenType, uint40 productId, uint64 expiry, uint64 longStrike, uint64 shortStrike)
+        returns (TokenType tokenType, uint32 productId, uint64 expiry, uint64 longStrike, uint64 shortStrike)
     {
         return TokenIdUtil.parseTokenId(tokenId);
     }
@@ -82,22 +82,6 @@ abstract contract ActionHelper {
         returns (ActionArgs memory action)
     {
         return ActionUtil.createTransferShortAction(tokenId, amount, recipient);
-    }
-
-    function createMergeAction(uint256 tokenId, uint256 shortId, address from, uint256 amount)
-        internal
-        pure
-        returns (ActionArgs memory action)
-    {
-        return ActionUtil.createMergeAction(tokenId, shortId, amount, from);
-    }
-
-    function createSplitAction(uint256 spreadId, uint256 amount, address recipient)
-        internal
-        pure
-        returns (ActionArgs memory action)
-    {
-        return ActionUtil.createSplitAction(spreadId, amount, recipient);
     }
 
     function createAddLongAction(uint256 tokenId, uint256 amount, address from)

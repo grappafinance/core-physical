@@ -26,8 +26,6 @@ contract TestBurnOption_CM is CrossMarginFixture {
 
         expiry = block.timestamp + 14 days;
 
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
-
         // mint a 3000 strike call first
         tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
 
