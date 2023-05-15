@@ -5,6 +5,8 @@ import {IPomace} from "../../../interfaces/IPomace.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {UintArrayLib} from "array-lib/UintArrayLib.sol";
 
+import {ICrossMarginEngine} from "../../../interfaces/ICrossMarginEngine.sol";
+
 import "../../../libraries/TokenIdUtil.sol";
 import "../../../libraries/ProductIdUtil.sol";
 import "../../../libraries/BalanceUtil.sol";
@@ -25,7 +27,7 @@ library CrossMarginLib {
     using BalanceUtil for Balance[];
     using AccountUtil for Position[];
     using UintArrayLib for uint256[];
-    using ProductIdUtil for uint40;
+    using ProductIdUtil for uint32;
     using TokenIdUtil for uint256;
 
     /**
@@ -129,48 +131,77 @@ library CrossMarginLib {
         }
     }
 
-    ///@dev Settles the accounts longs and shorts
-    ///@param account CrossMarginAccount storage that will be updated in-place
-    function settleAtExpiry(CrossMarginAccount storage account, IPomace pomace)
-        external
-        returns (Balance[] memory longPayouts, Balance[] memory shortPayouts)
-    {
-        // settling longs first as they can only increase collateral
-        longPayouts = _settleLongs(pomace, account);
-        // settling shorts last as they can only reduce collateral
-        shortPayouts = _settleShorts(pomace, account);
-    }
+    // ///@dev Settles the accounts longs and shorts
+    // ///@param account CrossMarginAccount storage that will be updated in-place
+    // function settleAtExpiry(CrossMarginAccount storage account, IPomace pomace)
+    //     external
+    //     returns (Balance[] memory longPayouts, Balance[] memory shortPayouts)
+    // {
+    //     // settling longs first as they can only increase collateral
+    //     _settleLongs(pomace, account);
+    //     // settling shorts last as they can only reduce collateral
+    //     _settleShorts(pomace, account);
+    // }
 
-    ///@dev Settles the accounts longs, adding collateral to balances
-    ///@param pomace interface to settle long options in a batch call
+    ///@dev Exercising long, adding and removing collateral to balances
     ///@param account CrossMarginAccount memory that will be updated in-place
-    function _settleLongs(IPomace pomace, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
+    ///@param pomace interface to settle long options in a batch call
+    ///@param tokenId Option to exercise
+    ///@param amount amount of options
+    function exerciseToken(CrossMarginAccount storage account, IPomace pomace, uint256 tokenId, uint256 amount)
+        external
+        returns (Balance memory debt, Balance memory payout)
+    {
         uint256 i;
-        uint256[] memory tokenIds;
-        uint256[] memory amounts;
+        bool tokenFound;
 
-        while (i < account.longs.length) {
-            uint256 tokenId = account.longs[i].tokenId;
+        for (i; i < account.longs.length;) {
+            if (tokenId == account.longs[i].tokenId) {
+                (,, uint64 expiry,, uint64 settlementWindow) = tokenId.parseTokenId();
 
-            if (tokenId.isExpired()) {
-                tokenIds = tokenIds.append(tokenId);
-                amounts = amounts.append(account.longs[i].amount);
+                if (expiry > block.timestamp) revert CML_NotExpired();
 
-                account.longs.removeAt(i);
-            } else {
-                unchecked {
-                    ++i;
+                if (expiry + settlementWindow < block.timestamp) {
+                    // worthless option, removing from account
+                    account.longs.removeAt(i);
+                } else {
+                    uint256 accountAmount = account.longs[i].amount;
+                    if (amount > accountAmount) revert CML_ExceedsAmount();
+
+                    if (amount == accountAmount) {
+                        account.longs.removeAt(i);
+                    } else {
+                        account.longs[i].amount -= uint64(amount);
+                    }
                 }
+
+                tokenFound = true;
+
+                break;
+            }
+
+            unchecked {
+                ++i;
             }
         }
 
-        if (tokenIds.length > 0) {
-            payouts = pomace.batchSettleOptions(address(this), tokenIds, amounts);
+        if (tokenFound) {
+            (debt, payout) = pomace.settleOption(address(this), tokenId, amount);
 
-            for (i = 0; i < payouts.length;) {
-                // add the collateral in the account storage.
-                addCollateral(account, payouts[i].collateralId, payouts[i].amount);
+            // add the collateral in the account storage.
+            addCollateral(account, payout.collateralId, payout.amount);
 
+            // remove the collateral in the account storage.
+            removeCollateral(account, debt.collateralId, debt.amount);
+        }
+
+        // clean up worthless tokens
+        for (i = 0; i < account.longs.length;) {
+            (,, uint64 expiry,, uint64 settlementWindow) = account.longs[i].tokenId.parseTokenId();
+
+            if (expiry + settlementWindow < block.timestamp) {
+                account.longs.removeAt(i);
+            } else {
                 unchecked {
                     ++i;
                 }
@@ -179,20 +210,24 @@ library CrossMarginLib {
     }
 
     ///@dev Settles the accounts shorts, reserving collateral for ITM options
-    ///@param pomace interface to get short option payouts in a batch call
     ///@param account CrossMarginAccount memory that will be updated in-place
-    function _settleShorts(IPomace pomace, CrossMarginAccount storage account) public returns (Balance[] memory payouts) {
+    function settleShorts(CrossMarginAccount storage account)
+        external
+        returns (Balance[] memory debts, Balance[] memory payouts)
+    {
         uint256 i;
         uint256[] memory tokenIds;
         uint256[] memory amounts;
 
-        while (i < account.shorts.length) {
+        for (i; i < account.shorts.length;) {
             uint256 tokenId = account.shorts[i].tokenId;
 
-            if (tokenId.isExpired()) {
+            (,, uint64 expiry,, uint64 settlementWindow) = tokenId.parseTokenId();
+
+            // can only settle short options after the settlement window
+            if (expiry + settlementWindow < block.timestamp) {
                 tokenIds = tokenIds.append(tokenId);
                 amounts = amounts.append(account.shorts[i].amount);
-
                 account.shorts.removeAt(i);
             } else {
                 unchecked {
@@ -201,13 +236,27 @@ library CrossMarginLib {
             }
         }
 
+        ICrossMarginEngine engine = ICrossMarginEngine(address(this));
+
         if (tokenIds.length > 0) {
-            payouts = pomace.batchGetPayouts(tokenIds, amounts);
+            // the engine will socialized the debt and payout for settled options
+            (debts, payouts) = engine.getBatchSettlementForShorts(tokenIds, amounts);
 
             for (i = 0; i < payouts.length;) {
-                // remove the collateral in the account storage.
-                removeCollateral(account, payouts[i].collateralId, payouts[i].amount);
+                if (payouts[i].amount > 0) {
+                    // remove the collateral in the account storage.
+                    removeCollateral(account, payouts[i].collateralId, payouts[i].amount);
+                }
+                unchecked {
+                    ++i;
+                }
+            }
 
+            for (i = 0; i < debts.length;) {
+                if (debts[i].amount > 0) {
+                    // add to what is paid from exerciser
+                    addCollateral(account, debts[i].collateralId, debts[i].amount);
+                }
                 unchecked {
                     ++i;
                 }

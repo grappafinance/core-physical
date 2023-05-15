@@ -15,7 +15,7 @@ error CM_AccountIsNotEmpty();
 error CM_UnsupportedTokenType();
 
 /// @dev can only add long tokens that are not expired
-error CM_Option_Expired();
+error CM_Token_Expired();
 
 /// @dev can only add long tokens from authorized engines
 error CM_Not_Authorized_Engine();
@@ -29,9 +29,9 @@ error CM_CannotMintOptionWithThisCollateral();
 /// @dev invalid tokenId specify to mint / burn actions
 error CM_InvalidToken();
 
-/* --------------------- *
+/* -------------------------- *
  *  Cross Margin Math Errors
- * --------------------- */
+ * -------------------------- */
 
 /// @dev invalid put length given strikes
 error CMM_InvalidPutLengths();
@@ -44,3 +44,12 @@ error CMM_InvalidPutWeight();
 
 /// @dev invalid call length of zero
 error CMM_InvalidCallWeight();
+
+/* ------------------------ *
+ *  Cross Margin Lib Errors
+ * ------------------------ */
+
+/// @dev token not yet expired
+error CML_NotExpired();
+
+error CML_ExceedsAmount();

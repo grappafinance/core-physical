@@ -42,24 +42,6 @@ error PM_Not_Authorized_Engine();
  *   Common BaseEngine Errors   *
  * ---------------------------  */
 
-/// @dev can only merge subaccount with put or call.
-error BM_CannotMergeSpread();
-
-/// @dev only spread position can be split
-error BM_CanOnlySplitSpread();
-
-/// @dev type of existing short token doesn't match the incoming token
-error BM_MergeTypeMismatch();
-
-/// @dev product type of existing short token doesn't match the incoming token
-error BM_MergeProductMismatch();
-
-/// @dev expiry of existing short token doesn't match the incoming token
-error BM_MergeExpiryMismatch();
-
-/// @dev cannot merge type with the same strike. (should use burn instead)
-error BM_MergeWithSameStrike();
-
 /// @dev account is not healthy / account is underwater
 error BM_AccountUnderwater();
 

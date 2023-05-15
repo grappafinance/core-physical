@@ -10,7 +10,7 @@ contract TokenIdUtilTest is Test {
     function testTokenIdHigherThan0(uint8 tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 settlementWindow)
         public
     {
-        vm.assume(tokenType < 4);
+        vm.assume(tokenType < 2);
         vm.assume(productId > 0);
 
         uint256 id = TokenIdUtil.getTokenId(TokenType(tokenType), productId, expiry, strike, settlementWindow);
@@ -25,11 +25,11 @@ contract TokenIdUtilTest is Test {
         uint64 strike,
         uint64 settlementWindow
     ) public {
-        vm.assume(tokenType < 4);
+        vm.assume(tokenType < 2);
         vm.assume(productId > 0);
 
         uint256 id = TokenIdUtil.getTokenId(TokenType(tokenType), productId, expiry, strike, settlementWindow);
-        (TokenType _tokenType, uint40 _productId, uint64 _expiry, uint64 _strike, uint64 _settlementWindow) =
+        (TokenType _tokenType, uint32 _productId, uint64 _expiry, uint64 _strike, uint64 _settlementWindow) =
             TokenIdUtil.parseTokenId(id);
 
         assertEq(uint8(tokenType), uint8(_tokenType));
@@ -46,12 +46,12 @@ contract TokenIdUtilTest is Test {
         uint256 strike,
         uint256 settlementWindow
     ) public {
-        vm.assume(tokenType < 4);
+        vm.assume(tokenType < 2);
         vm.assume(productId > 0);
 
         uint256 id =
             TokenIdUtil.getTokenId(TokenType(tokenType), productId, uint64(expiry), uint64(strike), uint64(settlementWindow));
-        (TokenType _tokenType, uint40 _productId, uint64 _expiry, uint64 _strike, uint64 _settlementWindow) =
+        (TokenType _tokenType, uint32 _productId, uint64 _expiry, uint64 _strike, uint64 _settlementWindow) =
             TokenIdUtil.parseTokenId(id);
 
         assertEq(tokenType, uint8(_tokenType));

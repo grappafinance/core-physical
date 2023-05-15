@@ -433,7 +433,7 @@ library CrossMarginMath {
     function _getProductDetails(IPomace pomace, uint32 productId) internal view returns (ProductDetails memory info) {
         (, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
 
-        (,, address underlying, uint8 underlyingDecimals, address strike, uint8 strikeDecimals,,) =
+        (, address underlying, uint8 underlyingDecimals, address strike, uint8 strikeDecimals,,) =
             pomace.getDetailFromProductId(productId);
 
         info.underlying = underlying;

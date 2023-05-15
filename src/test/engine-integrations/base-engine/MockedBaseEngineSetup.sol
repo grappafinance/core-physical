@@ -43,7 +43,7 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
         weth = new MockERC20("WETH", "WETH", 18); // nonce: 2
 
         // predict address of margin account and use it here
-        address pomaceAddr = predictAddress(address(this), 6);
+        address pomaceAddr = predictAddress(address(this), 5);
 
         option = new OptionToken(pomaceAddr, address(0)); // nonce: 3
 

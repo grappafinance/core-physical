@@ -24,7 +24,7 @@ contract CrossEngineGenernal is CrossMarginFixture {
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createAddLongAction(0, 0, address(this));
 
-        vm.expectRevert(CM_Option_Expired.selector);
+        vm.expectRevert(CM_Token_Expired.selector);
         engine.execute(address(this), actions);
     }
 
@@ -58,9 +58,10 @@ contract CrossEngineGenernal is CrossMarginFixture {
         uint256 depositAmount = 5000 * 1e6;
 
         uint256 strikePrice = 3000 * UNIT;
+        uint256 settlementWindow = 300;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);

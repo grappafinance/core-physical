@@ -53,7 +53,7 @@ contract CrossMarginEngine is
     using AccountUtil for Position[];
     using BalanceUtil for Balance[];
     using CrossMarginLib for CrossMarginAccount;
-    using ProductIdUtil for uint40;
+    using ProductIdUtil for uint32;
     using SafeCast for uint256;
     using SafeCast for int256;
     using TokenIdUtil for uint256;
@@ -67,8 +67,8 @@ contract CrossMarginEngine is
     ///     this give every account access to 256 sub-accounts
     mapping(address => CrossMarginAccount) internal accounts;
 
-    /// @dev token => PhysicalSettlementTracker
-    mapping(uint256 => PhysicalSettlementTracker) public tokenTracker;
+    /// @dev token => SettlementTracker
+    mapping(uint256 => SettlementTracker) public tokenTracker;
 
     ///@dev contract that verifies permissions
     ///     if not set allows anyone to transact
@@ -201,7 +201,7 @@ contract CrossMarginEngine is
         (debts, payouts) = pomace.batchGetDebtAndPayouts(_tokenIds, _amounts);
 
         for (uint256 i; i < _tokenIds.length;) {
-            PhysicalSettlementTracker memory tracker = tokenTracker[_tokenIds[i]];
+            SettlementTracker memory tracker = tokenTracker[_tokenIds[i]];
 
             // if the token is physical settled and someone exercised within exercise window
             // we socialized the payout and debt (total amount paid out and received during exercise window)
@@ -339,8 +339,8 @@ contract CrossMarginEngine is
      */
     function _settle(address _subAccount) internal override {
         // update the account in state
-        (, Balance[] memory shortPayouts) = accounts[_subAccount].settleAtExpiry(pomace);
-        emit AccountSettled(_subAccount, shortPayouts);
+        (, Balance[] memory payouts) = accounts[_subAccount].settleShorts();
+        emit AccountSettled(_subAccount, payouts);
     }
 
     /**
@@ -348,6 +348,46 @@ contract CrossMarginEngine is
      *               Override Sate changing functions             *
      * ========================================================= *
      */
+
+    /**
+     * @dev mint option token to _subAccount, increase tracker issuance
+     * @param _data bytes data to decode
+     */
+    function _mintOption(address _subAccount, bytes calldata _data) internal virtual override {
+        super._mintOption(_subAccount, _data);
+
+        // decode tokenId
+        (uint256 tokenId,, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
+
+        tokenTracker[tokenId].issued += amount;
+    }
+
+    /**
+     * @dev mint option token into account, increase tracker issuance
+     * @param _data bytes data to decode
+     */
+    function _mintOptionIntoAccount(address _subAccount, bytes calldata _data) internal virtual override {
+        super._mintOptionIntoAccount(_subAccount, _data);
+
+        // decode tokenId
+        (uint256 tokenId,, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
+
+        // grappa.trackTokenIssuance(tokenId, amount, true);
+        tokenTracker[tokenId].issued += amount;
+    }
+
+    /**
+     * @dev burn option token from user, decrease tracker issuance
+     * @param _data bytes data to decode
+     */
+    function _burnOption(address _subAccount, bytes calldata _data) internal virtual override {
+        super._burnOption(_subAccount, _data);
+
+        // decode parameters
+        (uint256 tokenId,, uint64 amount) = abi.decode(_data, (uint256, address, uint64));
+
+        tokenTracker[tokenId].issued -= amount;
+    }
 
     function _addCollateralToAccount(address _subAccount, uint8 collateralId, uint80 amount) internal override {
         accounts[_subAccount].addCollateral(collateralId, amount);
@@ -371,6 +411,10 @@ contract CrossMarginEngine is
 
     function _decreaseLongInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal override {
         accounts[_subAccount].removeOption(tokenId, amount);
+    }
+
+    function _exerciseTokenInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal override {
+        accounts[_subAccount].exerciseToken(pomace, tokenId, amount);
     }
 
     /**
@@ -446,12 +490,12 @@ contract CrossMarginEngine is
      * @param tokenId tokenId
      */
     function _verifyLongTokenIdToAdd(uint256 tokenId) internal view override {
-        (TokenType optionType,, uint64 expiry,,) = tokenId.parseTokenId();
+        (TokenType tokenType,, uint64 expiry,,) = tokenId.parseTokenId();
 
         // engine only supports calls and puts
-        if (optionType != TokenType.CALL && optionType != TokenType.PUT) revert CM_UnsupportedTokenType();
+        if (tokenType != TokenType.CALL && tokenType != TokenType.PUT) revert CM_UnsupportedTokenType();
 
-        if (block.timestamp > expiry) revert CM_Option_Expired();
+        if (block.timestamp > expiry) revert CM_Token_Expired();
 
         uint8 engineId = tokenId.parseEngineId();
 
@@ -503,6 +547,8 @@ contract CrossMarginEngine is
                 _addOption(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.RemoveLong) {
                 _removeOption(_subAccount, actions[i].data);
+            } else if (actions[i].action == ActionType.ExerciseToken) {
+                _exerciseToken(_subAccount, actions[i].data);
             } else if (actions[i].action == ActionType.SettleAccount) {
                 _settle(_subAccount);
             } else {
@@ -533,7 +579,7 @@ contract CrossMarginEngine is
         return partialMarginMasks[_assetIdX] & mask != 0;
     }
 
-    function _socializeSettlement(PhysicalSettlementTracker memory tracker, uint256 tokenId, uint256 shortAmount)
+    function _socializeSettlement(SettlementTracker memory tracker, uint256 tokenId, uint256 shortAmount)
         internal
         pure
         returns (Balance memory debt, Balance memory payout)

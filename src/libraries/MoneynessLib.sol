@@ -38,42 +38,4 @@ library MoneynessLib {
             return spot > strike ? 0 : strike - spot;
         }
     }
-
-    /**
-     * @notice  get the cash value of a debit call spread
-     * @dev     returns min(max(spot - strike, 0), shortStrike - longStrike)
-     * @dev     expect long strike to be lower than short strike
-     * @param spot spot price
-     * @param longStrike strike price of the long call
-     * @param shortStrike strike price of the short call
-     */
-    function getCashValueDebitCallSpread(uint256 spot, uint256 longStrike, uint256 shortStrike) internal pure returns (uint256) {
-        // assume long strike is lower than short strike.
-        unchecked {
-            if (spot > shortStrike) return shortStrike - longStrike;
-            // expired itm, capped at (short - long)
-            else if (spot > longStrike) return spot - longStrike;
-            // expired itm
-            else return 0;
-        }
-    }
-
-    /**
-     * @notice  get the cash value of a debit put spread
-     * @dev     returns min(max(strike - spot, 0), longStrike - shortStrike)
-     * @dev     expect long strike to be higher than short strike
-     * @param spot spot price
-     * @param longStrike strike price of the long put
-     * @param longStrike strike price of the short put
-     */
-    function getCashValueDebitPutSpread(uint256 spot, uint256 longStrike, uint256 shortStrike) internal pure returns (uint256) {
-        // assume long strike is higher than short strike.
-        unchecked {
-            if (spot < shortStrike) return longStrike - shortStrike;
-            // expired itm, capped at (long - short)
-            else if (spot < longStrike) return longStrike - spot;
-            // expired itm
-            else return 0;
-        }
-    }
 }

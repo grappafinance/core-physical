@@ -16,6 +16,7 @@ enum ActionType {
     BurnShort,
     AddLong,
     RemoveLong,
+    ExerciseToken,
     SettleAccount,
     // actions that influence more than one subAccounts:
     // These actions are defined in "OptionTransferable"

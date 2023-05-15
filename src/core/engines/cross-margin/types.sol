@@ -54,7 +54,7 @@ struct Position {
     uint64 amount;
 }
 
-struct PhysicalSettlementTracker {
+struct SettlementTracker {
     uint64 issued;
     uint80 totalDebt;
     uint80 totalPaid;

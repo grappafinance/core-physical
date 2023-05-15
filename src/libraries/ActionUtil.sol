@@ -138,6 +138,13 @@ library ActionUtil {
     /**
      * @dev create action to settle an account
      */
+    function createExerciseTokenAction(uint256 tokenId, uint256 amount) internal pure returns (ActionArgs memory action) {
+        action = ActionArgs({action: ActionType.ExerciseToken, data: abi.encode(tokenId, uint64(amount))});
+    }
+
+    /**
+     * @dev create action to settle an account
+     */
     function createSettleAction() internal pure returns (ActionArgs memory action) {
         action = ActionArgs({action: ActionType.SettleAccount, data: ""});
     }

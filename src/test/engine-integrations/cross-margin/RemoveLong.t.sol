@@ -14,6 +14,7 @@ import "../../../test/mocks/MockERC20.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract TestRemoveLong_CM is CrossMarginFixture {
     uint256 public expiry;
+    uint256 public settlementWindow;
 
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);
@@ -23,8 +24,7 @@ contract TestRemoveLong_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 1 days;
-
-
+        settlementWindow = 300;
     }
 
     function testRemoveLongToken() public {
@@ -33,7 +33,7 @@ contract TestRemoveLong_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](2);

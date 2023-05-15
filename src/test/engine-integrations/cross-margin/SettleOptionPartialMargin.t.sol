@@ -25,6 +25,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
     uint32 internal pidSdycCollat;
 
     uint256 public expiry;
+    uint256 public settlementWindow;
 
     function setUp() public {
         lsEth = new MockERC20("LsETH", "LsETH", 18);
@@ -49,6 +50,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         sdyc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
+        settlementWindow = 300;
     }
 
     function testCallITM() public {
@@ -56,7 +58,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 1 * 1e18;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount);
@@ -90,7 +92,7 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 2000 * 1e6;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount);

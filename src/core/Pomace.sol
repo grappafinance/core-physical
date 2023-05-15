@@ -27,6 +27,8 @@ import "../config/enums.sol";
 import "../config/constants.sol";
 import "../config/errors.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title   Pomace
  * @author  @antoncoding, @dsshap
@@ -36,7 +38,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     using BalanceUtil for Balance[];
     using FixedPointMathLib for uint256;
     using NumberUtil for uint256;
-    using ProductIdUtil for uint40;
+    using ProductIdUtil for uint32;
     using SafeCast for uint256;
     using TokenIdUtil for uint256;
 
@@ -191,7 +193,11 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @param _tokenId  tokenId of option token to burn
      * @param _amount   amount to settle
      */
-    function settleOption(address _account, uint256 _tokenId, uint256 _amount) public nonReentrant returns (uint256, uint256) {
+    function settleOption(address _account, uint256 _tokenId, uint256 _amount)
+        public
+        nonReentrant
+        returns (Balance memory, Balance memory)
+    {
         (address engine_, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout) =
             getDebtAndPayout(_tokenId, _amount.toUint64());
 
@@ -209,7 +215,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
             engine.sendPayoutValue(assets[payoutId].addr, _account, payout);
         }
 
-        return (debt, payout);
+        return (Balance(debtId, debt.toUint80()), Balance(payoutId, payout.toUint80()));
     }
 
     /**

@@ -57,7 +57,7 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         vm.label(address(weth), "WETH");
 
         // predict address of margin account and use it here
-        address pomaceAddr = predictAddress(address(this), 6);
+        address pomaceAddr = predictAddress(address(this), 5);
 
         option = new OptionToken(pomaceAddr, address(0)); // nonce: 3
         vm.label(address(option), "OptionToken");
@@ -109,7 +109,7 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         return this.onERC1155Received.selector;
     }
 
-    function mintOptionFor(address _recipient, uint256 _tokenId, uint40 _productId, uint256 _amount) internal {
+    function mintOptionFor(address _recipient, uint256 _tokenId, uint32 _productId, uint256 _amount) internal {
         address anon = address(0x42424242);
 
         vm.startPrank(anon);

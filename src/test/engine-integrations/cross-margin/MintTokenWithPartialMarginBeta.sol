@@ -30,6 +30,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     uint32 internal pidLsEthCollat;
 
     uint256 public expiry;
+    uint256 public settlementWindow;
 
     function setUp() public {
         lsEth = new MockERC20("LsETH", "LsETH", 18);
@@ -64,6 +65,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         lsEth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
+        settlementWindow = 300;
     }
 
     function testRemovePartialMarginMask() public {
@@ -89,7 +91,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount);
@@ -111,8 +113,8 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
-        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId1 = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](3);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount * 2);
@@ -138,7 +140,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount);
@@ -160,8 +162,8 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 0);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](3);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount * 2);
@@ -184,8 +186,8 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     function testCannotMintTooLittleCollateral() public {
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, 0);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, 0);
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](4);
         actions[0] = createAddCollateralAction(usdtId, address(this), 900 * 1e6);
@@ -201,9 +203,9 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     function testMintMixedBag() public {
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, 0);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, 0);
-        uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, 0);
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, settlementWindow);
+        uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](6);
         actions[0] = createAddCollateralAction(usdtId, address(this), 1800 * 1e6);

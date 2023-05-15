@@ -53,6 +53,8 @@ abstract contract BaseEngine {
 
     event OptionTokenRemoved(address subAccount, uint256 tokenId, uint64 amount);
 
+    event ExercisedToken(address subAccount, uint256 tokenId, uint256 amount);
+
     /// @dev emitted when an account is settled, with array of payouts
     event AccountSettled(address subAccount, Balance[] payouts);
 
@@ -103,13 +105,13 @@ abstract contract BaseEngine {
     }
 
     /**
-     * @dev hook to be invoked by Grappa to handle custom logic of settlement
+     * @dev hook to be invoked by Pomace to handle custom logic of settlement
      */
     function handleExercise(uint256 _tokenId, uint256 _debtPaid, uint256 _amountPaidOut) external virtual {}
 
     /**
      * @notice payout to user on settlement.
-     * @dev this can only triggered by Grappa, would only be called on settlement.
+     * @dev this can only triggered by Pomace, would only be called on settlement.
      * @param _asset asset to transfer
      * @param _sender sender of debt
      * @param _amount amount
@@ -122,7 +124,7 @@ abstract contract BaseEngine {
 
     /**
      * @notice payout to user on settlement.
-     * @dev this can only triggered by Grappa, would only be called on settlement.
+     * @dev this can only triggered by Pomace, would only be called on settlement.
      * @param _asset asset to transfer
      * @param _recipient receiver
      * @param _amount amount
@@ -279,6 +281,19 @@ abstract contract BaseEngine {
     }
 
     /**
+     * @notice  exercises a long token in margin account at expiry but before settlement window
+     * @dev     this updates the account storage
+     */
+    function _exerciseToken(address _subAccount, bytes calldata _data) internal virtual {
+        // decode parameters
+        (uint256 tokenId, uint64 amount) = abi.decode(_data, (uint256, uint64));
+
+        _exerciseTokenInAccount(_subAccount, tokenId, amount);
+
+        emit ExercisedToken(_subAccount, tokenId, amount);
+    }
+
+    /**
      * @notice  settle the margin account at expiry
      * @dev     this update the account storage
      */
@@ -312,6 +327,8 @@ abstract contract BaseEngine {
     function _increaseLongInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal virtual {}
 
     function _decreaseLongInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal virtual {}
+
+    function _exerciseTokenInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal virtual {}
 
     function _settleAccount(address _subAccount, int80 payout) internal virtual {}
 
