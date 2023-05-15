@@ -404,7 +404,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
 
         if (block.timestamp < expiry) revert PM_NotExpired();
 
-        if (block.timestamp >= expiry + settlementWindow) return (address(0), 0, 0, 0, 0);
+        if (block.timestamp > expiry + settlementWindow) return (address(0), 0, 0, 0, 0);
 
         (uint8 engineId, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
 

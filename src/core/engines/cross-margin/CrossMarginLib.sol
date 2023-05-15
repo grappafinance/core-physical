@@ -189,10 +189,10 @@ library CrossMarginLib {
             (debt, payout) = pomace.settleOption(address(this), tokenId, amount);
 
             // add the collateral in the account storage.
-            addCollateral(account, payout.collateralId, payout.amount);
+            if (payout.amount > 0) addCollateral(account, payout.collateralId, payout.amount);
 
             // remove the collateral in the account storage.
-            removeCollateral(account, debt.collateralId, debt.amount);
+            if (debt.amount > 0) removeCollateral(account, debt.collateralId, debt.amount);
         }
 
         // clean up worthless tokens
@@ -224,6 +224,8 @@ library CrossMarginLib {
 
             (,, uint64 expiry,, uint64 settlementWindow) = tokenId.parseTokenId();
 
+            console2.log("expiry", expiry, "settlementWindow", settlementWindow);
+
             // can only settle short options after the settlement window
             if (expiry + settlementWindow < block.timestamp) {
                 tokenIds = tokenIds.append(tokenId);
@@ -242,21 +244,14 @@ library CrossMarginLib {
             // the engine will socialized the debt and payout for settled options
             (debts, payouts) = engine.getBatchSettlementForShorts(tokenIds, amounts);
 
+            // debts and payouts are equal length
             for (i = 0; i < payouts.length;) {
-                if (payouts[i].amount > 0) {
-                    // remove the collateral in the account storage.
-                    removeCollateral(account, payouts[i].collateralId, payouts[i].amount);
-                }
-                unchecked {
-                    ++i;
-                }
-            }
+                // add to what is paid from exerciser
+                if (debts[i].amount > 0) addCollateral(account, debts[i].collateralId, debts[i].amount);
 
-            for (i = 0; i < debts.length;) {
-                if (debts[i].amount > 0) {
-                    // add to what is paid from exerciser
-                    addCollateral(account, debts[i].collateralId, debts[i].amount);
-                }
+                // remove the collateral in the account storage.
+                if (payouts[i].amount > 0) removeCollateral(account, payouts[i].collateralId, payouts[i].amount);
+
                 unchecked {
                     ++i;
                 }

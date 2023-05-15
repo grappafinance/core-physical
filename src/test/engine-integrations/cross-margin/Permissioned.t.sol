@@ -75,6 +75,9 @@ contract Permissioned is CrossMarginFixture {
         whitelist.setEngineAccess(address(this), true);
         whitelist.setEngineAccess(alice, true);
 
+        vm.prank(alice);
+        usdc.approve(address(engine), type(uint256).max);
+
         _mintOptionToAlice();
 
         vm.warp(expiry);
