@@ -30,7 +30,7 @@ contract OptionTokenDescriptor is OwnableUpgradeable, UUPSUpgradeable, IOptionTo
      * @dev we just simply return a static url for now
      */
     function tokenURI(uint256 id) external pure override returns (string memory) {
-        return string(abi.encodePacked("https://pomace.finance/token/", Strings.toString(id)));
+        return string(abi.encodePacked("https://grappa.finance/token/", Strings.toString(id)));
     }
 
     /**

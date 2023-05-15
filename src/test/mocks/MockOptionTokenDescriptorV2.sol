@@ -16,7 +16,7 @@ contract MockTokenDescriptorV2 is UUPSUpgradeable {
      * @dev for v1, we just simply put a static url
      */
     function tokenURI(uint256 id) external pure returns (string memory) {
-        return string(abi.encodePacked("https://pomace.finance/token/v2/", Strings.toString(id)));
+        return string(abi.encodePacked("https://grappa.finance/token/v2/", Strings.toString(id)));
     }
 
     /**

@@ -66,8 +66,8 @@ contract OptionTokenTest is Test {
     }
 
     function testGetUrl() public {
-        assertEq(option.uri(0), "https://pomace.finance/token/0");
+        assertEq(option.uri(0), "https://grappa.finance/token/0");
 
-        assertEq(option.uri(200), "https://pomace.finance/token/200");
+        assertEq(option.uri(200), "https://grappa.finance/token/200");
     }
 }
