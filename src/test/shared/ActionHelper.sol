@@ -100,11 +100,7 @@ abstract contract ActionHelper {
         return ActionUtil.createRemoveLongAction(tokenId, amount, recipient);
     }
 
-    function createExerciseTokenAction(uint256 tokenId, uint256 amount)
-        internal
-        pure
-        returns (ActionArgs memory action)
-    {
+    function createExerciseTokenAction(uint256 tokenId, uint256 amount) internal pure returns (ActionArgs memory action) {
         return ActionUtil.createExerciseTokenAction(tokenId, amount);
     }
 

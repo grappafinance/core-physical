@@ -41,7 +41,6 @@ contract TestTransfer_CM is CrossMarginFixture {
 
         c5000 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 5000 * UNIT, settlementWindow);
 
-
         ActionArgs[] memory aliceActions = new ActionArgs[](2);
         aliceActions[0] = createAddCollateralAction(wethId, alice, depositAmount);
         aliceActions[1] = createMintIntoAccountAction(c5000, address(this), amount);

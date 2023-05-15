@@ -224,8 +224,6 @@ library CrossMarginLib {
 
             (,, uint64 expiry,, uint64 settlementWindow) = tokenId.parseTokenId();
 
-            console2.log("expiry", expiry, "settlementWindow", settlementWindow);
-
             // can only settle short options after the settlement window
             if (expiry + settlementWindow < block.timestamp) {
                 tokenIds = tokenIds.append(tokenId);

@@ -503,7 +503,6 @@ contract TestSettlePhysicalLongPositions_CM is CrossMarginFixture {
         assertEq(collateralsAfter.length, 1);
         assertEq(collateralsAfter[0].collateralId, wethId);
         assertEq(collateralsAfter[0].amount, wethDepositAmount / 2);
-
     }
 
     function testCannotClearLongCallAfterWindowClosed() public {
@@ -548,7 +547,7 @@ contract TestSettlePhysicalLongPositions_CM is CrossMarginFixture {
     }
 
     function testCanClearMultipleLongCallAfterExpiryBeforeWindowClosed() public {
-        uint256 tokenId1 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow  + 1 hours);
+        uint256 tokenId1 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strike, settlementWindow + 1 hours);
         uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry + 1 hours, strike, settlementWindow);
 
         _mintTokens(tokenId1, wethId, wethDepositAmount);
@@ -712,7 +711,6 @@ contract TestSettleSocializedLosses_CM is CrossMarginFixture {
         vm.prank(alice);
         engine.execute(alice, actions);
 
-
         (Position[] memory shorts,, Balance[] memory collaterals) = engine.marginAccounts(address(this));
         assertEq(shorts.length, 0);
         assertEq(collaterals.length, 2);
@@ -729,5 +727,4 @@ contract TestSettleSocializedLosses_CM is CrossMarginFixture {
         assertEq(collaterals[1].collateralId, wethId);
         assertEq(collaterals[1].amount, 1e18 / 2);
     }
-
 }
