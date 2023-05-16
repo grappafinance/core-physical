@@ -18,7 +18,7 @@ contract OptionTokenTest is Test {
     address public nftDescriptor;
 
     function setUp() public {
-        pomace = address(new Pomace(address(0)));
+        pomace = address(new Pomace(address(0), address(0)));
 
         nftDescriptor = address(new OptionTokenDescriptor());
 

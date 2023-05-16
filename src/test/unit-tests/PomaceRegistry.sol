@@ -23,7 +23,7 @@ contract PomaceRegistry is Test {
         weth = new MockERC20("WETH", "WETH", 18);
 
         // set option to 0
-        address pomaceImplementation = address(new Pomace(address(0))); // nonce: 5
+        address pomaceImplementation = address(new Pomace(address(0), address(0))); // nonce: 5
 
         bytes memory data = abi.encode(Pomace.initialize.selector);
 
@@ -106,7 +106,7 @@ contract RegisterEngineTest is Test {
 
     constructor() {
         engine1 = address(1);
-        address pomaceImplementation = address(new Pomace(address(0))); // nonce: 5
+        address pomaceImplementation = address(new Pomace(address(0), address(0))); // nonce: 5
 
         bytes memory data = abi.encode(Pomace.initialize.selector);
 

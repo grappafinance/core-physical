@@ -209,7 +209,7 @@ library CrossMarginLib {
         }
     }
 
-    ///@dev Settles the accounts shorts, reserving collateral for ITM options
+    ///@dev Settles the accounts shorts, updating collateral for exercised options
     ///@param account CrossMarginAccount memory that will be updated in-place
     function settleShorts(CrossMarginAccount storage account)
         external

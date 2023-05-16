@@ -149,17 +149,6 @@ contract PreviewCollateralReq_CMM is PreviewCollateralReqBase {
         assertEq(balances[0].amount, 28000 * UNIT);
     }
 
-    function testMarginSimpleITMPut() public {
-        OptionPosition[] memory positions = new OptionPosition[](1);
-        positions[0] = OptionPosition(TokenType.PUT, 22000 * UNIT, -1 * sUNIT);
-
-        Balance[] memory balances = _previewMinCollateral(positions);
-
-        assertEq(balances.length, 1);
-        assertEq(balances[0].collateralId, usdcId);
-        assertEq(balances[0].amount, 22000 * UNIT);
-    }
-
     function testMarginSimplePut() public {
         OptionPosition[] memory positions = new OptionPosition[](1);
         positions[0] = OptionPosition(TokenType.PUT, 15000 * UNIT, -1 * sUNIT);
@@ -171,18 +160,7 @@ contract PreviewCollateralReq_CMM is PreviewCollateralReqBase {
         assertEq(balances[0].amount, 15000 * UNIT);
     }
 
-    function testMarginSimpleITMCall() public {
-        OptionPosition[] memory positions = new OptionPosition[](1);
-        positions[0] = OptionPosition(TokenType.CALL, 15000 * UNIT, -1 * sUNIT);
-
-        Balance[] memory balances = _previewMinCollateral(positions);
-
-        assertEq(balances.length, 1);
-        assertEq(balances[0].collateralId, wethId);
-        assertEq(balances[0].amount, 1 * 1e18);
-    }
-
-    function testMarginSimpleOTMCall() public {
+    function testMarginSimpleCall() public {
         OptionPosition[] memory positions = new OptionPosition[](1);
         positions[0] = OptionPosition(TokenType.CALL, 22000 * UNIT, -1 * sUNIT);
 

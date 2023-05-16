@@ -9,3 +9,6 @@ uint256 constant UNIT = 10 ** 6;
 
 ///@dev int scaled used to convert amounts.
 int256 constant sUNIT = int256(10 ** 6);
+
+///@dev maximum dispute period for oracle
+uint256 constant MAX_DISPUTE_PERIOD = 6 hours;

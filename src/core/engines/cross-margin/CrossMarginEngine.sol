@@ -67,9 +67,6 @@ contract CrossMarginEngine is
     ///     this give every account access to 256 sub-accounts
     mapping(address => CrossMarginAccount) internal accounts;
 
-    /// @dev token => SettlementTracker
-    mapping(uint256 => SettlementTracker) public tokenTracker;
-
     ///@dev contract that verifies permissions
     ///     if not set allows anyone to transact
     ///     checks msg.sender on execute & batchExecute
@@ -84,11 +81,14 @@ contract CrossMarginEngine is
     ///     assetId => assetId masks
     mapping(uint256 => uint256) private partialMarginMasks;
 
+    /// @dev token => SettlementTracker
+    mapping(uint256 => SettlementTracker) public tokenTracker;
+
     /*///////////////////////////////////////////////////////////////
                             Events
     //////////////////////////////////////////////////////////////*/
 
-    event PartialMarginMaskSet(address assetX, address assetY, bool value);
+    event PartialMarginMaskSet(address asset0, address asset1, bool value);
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
@@ -272,20 +272,20 @@ contract CrossMarginEngine is
 
     /**
      * @notice  sets the Partial Margin Mask for a pair of assets
-     * @param _assetX the id of the asset a
-     * @param _assetY the id of the asset b
+     * @param _asset0 the id of the asset a
+     * @param _asset1 the id of the asset b
      * @param _value is margin-able
      */
-    function setPartialMarginMask(address _assetX, address _assetY, bool _value) external {
+    function setPartialMarginMask(address _asset0, address _asset1, bool _value) external {
         _checkOwner();
 
-        uint256 collateralId = pomace.assetIds(_assetX);
-        uint256 mask = 1 << (pomace.assetIds(_assetY) & 0xff);
+        uint256 collateralId = pomace.assetIds(_asset0);
+        uint256 mask = 1 << (pomace.assetIds(_asset1) & 0xff);
 
         if (_value) partialMarginMasks[collateralId] |= mask;
         else partialMarginMasks[collateralId] &= ~mask;
 
-        emit PartialMarginMaskSet(_assetX, _assetY, _value);
+        emit PartialMarginMaskSet(_asset0, _asset1, _value);
     }
 
     /**
@@ -585,15 +585,13 @@ contract CrossMarginEngine is
         returns (Balance memory debt, Balance memory payout)
     {
         (TokenType tokenType, uint32 productId,,,) = TokenIdUtil.parseTokenId(tokenId);
-        (, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
+        (, uint8 underlyingId, uint8 strikeId, uint8 collateralId) = ProductIdUtil.parseProductId(productId);
 
-        if (tokenType == TokenType.CALL) {
-            debt.collateralId = strikeId;
-            payout.collateralId = underlyingId;
-        } else if (tokenType == TokenType.PUT) {
-            debt.collateralId = underlyingId;
-            payout.collateralId = strikeId;
-        }
+        payout.collateralId = collateralId;
+
+        if (tokenType == TokenType.CALL) debt.collateralId = strikeId;
+        else if (tokenType == TokenType.PUT) debt.collateralId = underlyingId;
+
         debt.amount = (tracker.totalDebt * shortAmount / tracker.issued).toUint80();
         payout.amount = (tracker.totalPaid * shortAmount / tracker.issued).toUint80();
     }

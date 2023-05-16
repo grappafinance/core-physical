@@ -35,6 +35,9 @@ error PM_InvalidExpiry();
 /// @dev cannot mint token with zero settlement window
 error PM_InvalidSettlementWindow();
 
+/// @dev cannot mint token with zero settlement window
+error PM_InvalidCollateral();
+
 /// @dev burn or mint can only be called by corresponding engine.
 error PM_Not_Authorized_Engine();
 

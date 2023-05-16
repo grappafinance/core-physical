@@ -54,7 +54,7 @@ contract TestSettleOption_CM is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettlePhysicalCoveredCall_CM is CrossMarginFixture {
+contract TestSettleCoveredCall_CM is CrossMarginFixture {
     uint256 public expiry;
     uint256 public settlementWindow;
 
@@ -149,7 +149,7 @@ contract TestSettlePhysicalCoveredCall_CM is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettlePhysicalCollateralizedPut_CM is CrossMarginFixture {
+contract TestSettleCollateralizedPut_CM is CrossMarginFixture {
     uint256 public expiry;
     uint256 public settlementWindow;
 
@@ -170,7 +170,7 @@ contract TestSettlePhysicalCollateralizedPut_CM is CrossMarginFixture {
         tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strike, settlementWindow);
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
-        // give optoin to alice
+        // give option to alice
         actions[1] = createMintAction(tokenId, alice, amount);
 
         // mint option
@@ -244,7 +244,7 @@ contract TestSettlePhysicalCollateralizedPut_CM is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettlePhysicalShortPositions_CM is CrossMarginFixture {
+contract TestSettleShortPositions_CM is CrossMarginFixture {
     uint256 public expiry;
     uint256 public settlementWindow;
 
@@ -425,7 +425,7 @@ contract TestSettlePhysicalShortPositions_CM is CrossMarginFixture {
 }
 
 // solhint-disable-next-line contract-name-camelcase
-contract TestSettlePhysicalLongPositions_CM is CrossMarginFixture {
+contract TestExerciseLongPositions_CM is CrossMarginFixture {
     uint256 public expiry;
     uint256 public settlementWindow;
 

@@ -25,7 +25,7 @@ contract PomaceProxyTest is Test {
     constructor() {
         weth = new MockERC20("WETH", "WETH", 18);
 
-        implementation = new Pomace(address(0));
+        implementation = new Pomace(address(0), address(0));
         bytes memory data = abi.encode(Pomace.initialize.selector);
 
         pomace = Pomace(address(new PomaceProxy(address(implementation), data)));

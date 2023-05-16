@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
 import "../../mocks/MockERC20.sol";
+import "../../mocks/MockOracle.sol";
 import "../../mocks/MockWhitelist.sol";
 
 import "../../../core/engines/cross-margin/CrossMarginEngine.sol";
@@ -32,6 +33,8 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
     MockERC20 internal usdc;
     MockERC20 internal weth;
 
+    MockOracle internal oracle;
+
     MockWhitelist internal whitelist;
 
     address internal alice;
@@ -56,24 +59,26 @@ abstract contract CrossMarginFixture is Test, ActionHelper, Utilities {
         weth = new MockERC20("WETH", "WETH", 18); // nonce: 2
         vm.label(address(weth), "WETH");
 
-        // predict address of margin account and use it here
-        address pomaceAddr = predictAddress(address(this), 5);
+        oracle = new MockOracle(); // nonce: 3
 
-        option = new OptionToken(pomaceAddr, address(0)); // nonce: 3
+        // predict address of margin account and use it here
+        address pomaceAddr = predictAddress(address(this), 6);
+
+        option = new OptionToken(pomaceAddr, address(0)); // nonce: 4
         vm.label(address(option), "OptionToken");
 
-        address pomaceImplementation = address(new Pomace(address(option))); // nonce: 4
+        address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
 
         bytes memory pomaceData = abi.encode(Pomace.initialize.selector);
 
-        pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 5
+        pomace = Pomace(address(new PomaceProxy(pomaceImplementation, pomaceData))); // 6
         vm.label(address(pomace), "Pomace");
 
-        address engineImplementation = address(new CrossMarginEngine(address(pomace), address(option))); // nonce 6
+        address engineImplementation = address(new CrossMarginEngine(address(pomace), address(option))); // nonce 7
 
         bytes memory engineData = abi.encode(CrossMarginEngine.initialize.selector);
 
-        engine = CrossMarginEngine(address(new CrossMarginEngineProxy(engineImplementation, engineData))); // 7
+        engine = CrossMarginEngine(address(new CrossMarginEngineProxy(engineImplementation, engineData))); // 8
         vm.label(address(engine), "CrossMarginEngine");
 
         whitelist = new MockWhitelist();
