@@ -272,15 +272,15 @@ contract CrossMarginEngine is
 
     /**
      * @notice  sets the Partial Margin Mask for a pair of assets
-     * @param _asset0 the id of the asset a
-     * @param _asset1 the id of the asset b
+     * @param _asset0 the address of the asset 0
+     * @param _asset1 the address of the asset 1
      * @param _value is margin-able
      */
     function setPartialMarginMask(address _asset0, address _asset1, bool _value) external {
         _checkOwner();
 
         uint256 collateralId = pomace.assetIds(_asset0);
-        uint256 mask = 1 << (pomace.assetIds(_asset1) & 0xff);
+        uint256 mask = 1 << pomace.assetIds(_asset1);
 
         if (_value) partialMarginMasks[collateralId] |= mask;
         else partialMarginMasks[collateralId] &= ~mask;
@@ -572,11 +572,11 @@ contract CrossMarginEngine is
     /**
      * @dev gets partial margin mask for a pair of assetIds
      */
-    function _getPartialMarginMask(uint8 _assetIdX, uint8 _assetIdY) internal view returns (bool) {
-        if (_assetIdX == _assetIdY) return true;
+    function _getPartialMarginMask(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
+        if (_assetId0 == _assetId1) return true;
 
-        uint256 mask = 1 << (_assetIdY & 0xff);
-        return partialMarginMasks[_assetIdX] & mask != 0;
+        uint256 mask = 1 << _assetId1;
+        return partialMarginMasks[_assetId0] & mask != 0;
     }
 
     function _socializeSettlement(SettlementTracker memory tracker, uint256 tokenId, uint256 shortAmount)

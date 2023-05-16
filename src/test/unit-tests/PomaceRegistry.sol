@@ -142,3 +142,55 @@ contract RegisterEngineTest is Test {
         assertEq(engine, engine1);
     }
 }
+
+/**
+ * @dev test pomace functions around collateralizable assets
+ */
+contract CollateralizableCoTest is Test {
+    Pomace public pomace;
+    address private weth;
+    address private lseth; //liquid staked eth
+
+    constructor() {
+        weth = address(new MockERC20("WETH", "WETH", 18));
+        lseth = address(new MockERC20("LsETH", "LsETH", 18));
+
+        address pomaceImplementation = address(new Pomace(address(0), address(0)));
+
+        bytes memory data = abi.encode(Pomace.initialize.selector);
+
+        pomace = Pomace(address(new PomaceProxy(pomaceImplementation, data)));
+
+        pomace.registerAsset(address(weth));
+        pomace.registerAsset(address(lseth));
+    }
+
+    function testCannotAddCollateralizableMask() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(address(0xaacc));
+        pomace.setCollateralizableMask(weth, lseth, true);
+    }
+
+    function testAddCollateralizableMask() public {
+        pomace.setCollateralizableMask(weth, lseth, true);
+
+        assert(pomace.isCollateralizable(weth, lseth));
+    }
+
+    function testRemoveCollateralizableMask() public {
+        pomace.setCollateralizableMask(weth, lseth, true);
+        pomace.setCollateralizableMask(weth, lseth, false);
+
+        assert(!pomace.isCollateralizable(weth, lseth));
+    }
+
+    function testAddAndRemoveCollateralizableMask() public {
+        pomace.setCollateralizableMask(weth, lseth, true);
+        pomace.setCollateralizableMask(lseth, weth, true);
+
+        pomace.setCollateralizableMask(weth, lseth, false);
+
+        assert(pomace.isCollateralizable(lseth, weth));
+        assert(!pomace.isCollateralizable(weth, lseth));
+    }
+}

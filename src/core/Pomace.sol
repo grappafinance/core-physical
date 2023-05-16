@@ -28,8 +28,6 @@ import "../config/enums.sol";
 import "../config/constants.sol";
 import "../config/errors.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title   Pomace
  * @author  @dsshap, @antoncoding
@@ -122,20 +120,27 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
 
     /**
      * @notice  sets the Collateralizable Mask for a pair of assets
-     * @param _asset0 the id of the asset a
-     * @param _asset1 the id of the asset b
+     * @param _asset0 the address of the asset 0
+     * @param _asset1 the address of the asset 1
      * @param _value is margin-able
      */
     function setCollateralizableMask(address _asset0, address _asset1, bool _value) external {
         _checkOwner();
 
         uint256 collateralId = assetIds[_asset0];
-        uint256 mask = 1 << (assetIds[_asset1] & 0xff);
+        uint256 mask = 1 << assetIds[_asset1];
 
         if (_value) collateralizable[collateralId] |= mask;
         else collateralizable[collateralId] &= ~mask;
 
         emit CollateralizableMaskSet(_asset0, _asset1, _value);
+    }
+
+    /**
+     * @dev check if a pair of assets are collateralizable
+     */
+    function isCollateralizable(address _asset0, address _asset1) external view returns (bool) {
+        return _isCollateralizable(assetIds[_asset0], assetIds[_asset1]);
     }
 
     /**
@@ -513,12 +518,12 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     }
 
     /**
-     * @dev gets partial margin mask for a pair of assetIds
+     * @dev check if a pair of assetIds are collateralizable
      */
     function _isCollateralizable(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
         if (_assetId0 == _assetId1) return true;
 
-        uint256 mask = 1 << (_assetId1 & 0xff);
+        uint256 mask = 1 << _assetId1;
         return collateralizable[_assetId0] & mask != 0;
     }
 
