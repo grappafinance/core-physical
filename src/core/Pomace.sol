@@ -15,9 +15,8 @@ import {IOptionToken} from "../interfaces/IOptionToken.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IMarginEngine} from "../interfaces/IMarginEngine.sol";
 
-// librarise
+// libraries
 import {BalanceUtil} from "../libraries/BalanceUtil.sol";
-import {MoneynessLib} from "../libraries/MoneynessLib.sol";
 import {NumberUtil} from "../libraries/NumberUtil.sol";
 import {ProductIdUtil} from "../libraries/ProductIdUtil.sol";
 import {TokenIdUtil} from "../libraries/TokenIdUtil.sol";

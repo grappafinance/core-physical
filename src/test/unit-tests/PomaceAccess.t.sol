@@ -2,17 +2,19 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {CrossMarginFixture} from "../engine-integrations/cross-margin/CrossMarginFixture.t.sol";
+import {MockedBaseEngineSetup} from "../engine-integrations/base-engine/MockedBaseEngineSetup.sol";
 
 import "../../config/types.sol";
 import "../../config/errors.sol";
 
-contract PomaceAccessTest is CrossMarginFixture {
+contract PomaceAccessTest is MockedBaseEngineSetup {
     uint256 private depositAmount = 100 * 1e6;
 
     address private subAccountIdToModify;
 
     function setUp() public {
+        engine.setIsAboveWater(true);
+
         usdc.mint(address(this), 1000_000 * 1e6);
         usdc.approve(address(engine), type(uint256).max);
 
