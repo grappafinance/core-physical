@@ -46,7 +46,7 @@ interface IPomace {
         view
         returns (uint32 id);
 
-    function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 strike, uint256 settlementWindow)
+    function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 strike, uint256 exerciseWindow)
         external
         view
         returns (uint256 id);

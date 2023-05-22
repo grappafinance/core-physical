@@ -30,7 +30,7 @@ error PM_PriceNotFinalized();
 error PM_InvalidExpiry();
 
 /// @dev cannot mint token with zero settlement window
-error PM_InvalidSettlementWindow();
+error PM_InvalidExerciseWindow();
 
 /// @dev cannot mint token with zero settlement window
 error PM_InvalidCollateral();
