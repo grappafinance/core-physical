@@ -79,7 +79,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     event OptionSettled(address account, uint256 tokenId, uint256 amountSettled, uint256 debt, uint256 payout);
     event AssetRegistered(address asset, uint8 id);
     event MarginEngineRegistered(address engine, uint8 id);
-    event CollateralizableMaskSet(address asset0, address asset1, bool value);
+    event CollateralizableSet(address asset0, address asset1, bool value);
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
@@ -123,7 +123,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @param _asset1 the address of the asset 1
      * @param _value is margin-able
      */
-    function setCollateralizableMask(address _asset0, address _asset1, bool _value) external {
+    function setCollateralizable(address _asset0, address _asset1, bool _value) external {
         _checkOwner();
 
         uint256 collateralId = assetIds[_asset0];
@@ -132,7 +132,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
         if (_value) collateralizable[collateralId] |= mask;
         else collateralizable[collateralId] &= ~mask;
 
-        emit CollateralizableMaskSet(_asset0, _asset1, _value);
+        emit CollateralizableSet(_asset0, _asset1, _value);
     }
 
     /**
@@ -140,6 +140,13 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      */
     function isCollateralizable(address _asset0, address _asset1) external view returns (bool) {
         return _isCollateralizable(assetIds[_asset0], assetIds[_asset1]);
+    }
+
+    /**
+     * @dev check if a pair of assets are collateralizable
+     */
+    function isCollateralizable(uint8 _asset0, uint8 _asset1) external view returns (bool) {
+        return _isCollateralizable(_asset0, _asset1);
     }
 
     /**

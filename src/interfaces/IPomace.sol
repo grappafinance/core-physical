@@ -2,20 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "../config/types.sol";
+import {IOracle} from "./IOracle.sol";
 
 interface IPomace {
-    function getDetailFromProductId(uint32 _productId)
-        external
-        view
-        returns (
-            address engine,
-            address underlying,
-            uint8 underlyingDecimals,
-            address strike,
-            uint8 strikeDecimals,
-            address collateral,
-            uint8 collateralDecimals
-        );
+    function oracle() external view returns (IOracle oracle);
 
     function checkEngineAccess(uint256 _tokenId, address _engine) external view;
 
@@ -29,7 +19,9 @@ interface IPomace {
 
     function engines(uint8 _id) external view returns (address engine);
 
-    function oracles(uint8 _id) external view returns (address oracle);
+    function isCollateralizable(uint8 _asset0, uint8 _asset1) external view returns (bool);
+
+    function isCollateralizable(address _asset0, address _asset1) external view returns (bool);
 
     function getDebtAndPayout(uint256 tokenId, uint64 amount)
         external
@@ -50,6 +42,19 @@ interface IPomace {
         external
         view
         returns (uint256 id);
+
+    function getDetailFromProductId(uint32 _productId)
+        external
+        view
+        returns (
+            address engine,
+            address underlying,
+            uint8 underlyingDecimals,
+            address strike,
+            uint8 strikeDecimals,
+            address collateral,
+            uint8 collateralDecimals
+        );
 
     /**
      * @notice burn option token and get out cash value at expiry
