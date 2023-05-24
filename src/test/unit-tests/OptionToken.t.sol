@@ -52,7 +52,7 @@ contract OptionTokenTest is Test {
         option.batchBurnPomaceOnly(address(this), ids, amounts);
     }
 
-    function testCannotMintZeroSettlementWindow() public {
+    function testCannotMintZeroExerciseWindow() public {
         uint8 engineId = 1;
         uint256 expiry = block.timestamp + 1 days;
 
@@ -61,7 +61,7 @@ contract OptionTokenTest is Test {
         uint32 productId = ProductIdUtil.getProductId(engineId, 0, 0, 0);
         uint256 tokenId = TokenIdUtil.getTokenId(TokenType.CALL, productId, uint64(expiry), 40, 0);
 
-        vm.expectRevert(PM_InvalidSettlementWindow.selector);
+        vm.expectRevert(PM_InvalidExerciseWindow.selector);
         option.mint(address(this), tokenId, 1);
     }
 

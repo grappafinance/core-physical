@@ -12,12 +12,12 @@ import "../../config/types.sol";
  * @dev tester contract to make coverage works
  */
 contract TokenIdUtilTester {
-    function getTokenId(TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 settlementWindow)
+    function getTokenId(TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 exerciseWindow)
         external
         pure
         returns (uint256 tokenId)
     {
-        uint256 result = TokenIdUtil.getTokenId(tokenType, productId, expiry, strike, settlementWindow);
+        uint256 result = TokenIdUtil.getTokenId(tokenType, productId, expiry, strike, exerciseWindow);
         return result;
     }
 

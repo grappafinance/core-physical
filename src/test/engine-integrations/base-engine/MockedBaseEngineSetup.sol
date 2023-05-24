@@ -29,6 +29,8 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
 
     MockOracle internal oracle;
 
+    address internal alice;
+
     // usdc collateralized call / put
     uint32 internal productId;
 
@@ -68,6 +70,8 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
 
         productId = pomace.getProductId(address(engine), address(weth), address(usdc), address(usdc));
         productIdEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(weth));
+
+        alice = address(0xaaaa);
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external virtual returns (bytes4) {

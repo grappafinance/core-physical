@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// for easier import
-import "../core/engines/cross-margin/errors.sol";
-
 /* ------------------------ *
  *      Shared Errors       *
  * -----------------------  */
@@ -33,7 +30,7 @@ error PM_PriceNotFinalized();
 error PM_InvalidExpiry();
 
 /// @dev cannot mint token with zero settlement window
-error PM_InvalidSettlementWindow();
+error PM_InvalidExerciseWindow();
 
 /// @dev cannot mint token with zero settlement window
 error PM_InvalidCollateral();
