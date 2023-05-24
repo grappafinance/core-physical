@@ -217,34 +217,7 @@ contract TestStructures_CMM is Test {
         assertEq(underlyingNeeded, 0);
     }
 
-    function testMarginSimpleITMPut() public {
-        putWeights = new int256[](1);
-        putWeights[0] = -1 * sUNIT;
-
-        putStrikes = new uint256[](1);
-        putStrikes[0] = 22000 * UNIT;
-
-        callWeights = new int256[](0);
-        callStrikes = new uint256[](0);
-
-        CrossMarginDetail memory detail = CrossMarginDetail({
-            putWeights: putWeights,
-            putStrikes: putStrikes,
-            callWeights: callWeights,
-            callStrikes: callStrikes,
-            underlyingId: 0,
-            underlyingDecimals: UNIT_DECIMALS,
-            numeraireId: 1,
-            numeraireDecimals: UNIT_DECIMALS,
-            expiry: 0
-        });
-
-        (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
-        assertEq(numeraireNeeded, putStrikes[0]);
-        assertEq(underlyingNeeded, 0);
-    }
-
-    function testMarginSimpleOTMPut() public {
+    function testMarginSimplePut() public {
         putWeights = new int256[](1);
         putWeights[0] = -1 * sUNIT;
 
@@ -271,34 +244,7 @@ contract TestStructures_CMM is Test {
         assertEq(underlyingNeeded, 0);
     }
 
-    function testMarginSimpleITMCall() public {
-        putWeights = new int256[](0);
-        putStrikes = new uint256[](0);
-
-        callWeights = new int256[](1);
-        callWeights[0] = -1 * sUNIT;
-
-        callStrikes = new uint256[](1);
-        callStrikes[0] = 15000 * UNIT;
-
-        CrossMarginDetail memory detail = CrossMarginDetail({
-            putWeights: putWeights,
-            putStrikes: putStrikes,
-            callWeights: callWeights,
-            callStrikes: callStrikes,
-            underlyingId: 0,
-            underlyingDecimals: UNIT_DECIMALS,
-            numeraireId: 1,
-            numeraireDecimals: UNIT_DECIMALS,
-            expiry: 0
-        });
-
-        (uint256 numeraireNeeded, uint256 underlyingNeeded) = detail.getMinCollateral();
-        assertEq(numeraireNeeded, 0);
-        assertEq(underlyingNeeded, 1 * UNIT);
-    }
-
-    function testMarginSimpleOTMCall() public {
+    function testMarginSimpleCall() public {
         putWeights = new int256[](0);
         putStrikes = new uint256[](0);
 

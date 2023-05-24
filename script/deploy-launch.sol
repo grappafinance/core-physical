@@ -15,14 +15,20 @@ import "../src/core/PomaceProxy.sol";
 import "../src/core/engines/cross-margin/CrossMarginEngine.sol";
 import "../src/core/engines/cross-margin/CrossMarginEngineProxy.sol";
 
+import "../src/core/oracles/ChainlinkOracle.sol";
+import "../src/core/oracles/ChainlinkOracleDisputable.sol";
+
 import "../src/test/utils/Utilities.sol";
 
 contract Deploy is Script, Utilities {
     function run() external {
         vm.startBroadcast();
 
+        // deploy and register Oracles
+        (, address clOracleDisputable) = deployOracles();
+
         // Deploy core components
-        (Pomace pomace,, address optionToken) = deployCore();
+        (Pomace pomace,, address optionToken) = deployCore(clOracleDisputable);
 
         // deploy and register Cross Margin Engine
         deployCrossMarginEngine(pomace, optionToken);
@@ -31,8 +37,14 @@ contract Deploy is Script, Utilities {
         vm.stopBroadcast();
     }
 
+    function deployOracles() public returns (address clOracle, address clOracleDisputable) {
+        // ============ Deploy Chainlink Oracles ============== //
+        clOracle = address(new ChainlinkOracle());
+        clOracleDisputable = address(new ChainlinkOracleDisputable());
+    }
+
     /// @dev deploy core contracts: Upgradable Pomace, non-upgradable OptionToken with descriptor
-    function deployCore() public returns (Pomace pomace, address optionDesciptor, address optionToken) {
+    function deployCore(address oracle) public returns (Pomace pomace, address optionDesciptor, address optionToken) {
         uint256 nonce = vm.getNonce(msg.sender);
         console.log("nonce", nonce);
         console.log("Deployer", msg.sender);
@@ -42,7 +54,7 @@ contract Deploy is Script, Utilities {
         // =================== Deploy Pomace (Upgradable) =============== //
         address optionTokenAddr = predictAddress(msg.sender, nonce + 4);
 
-        address implementation = address(new Pomace(optionTokenAddr)); // nonce
+        address implementation = address(new Pomace(optionTokenAddr, oracle)); // nonce
         console.log("pomace implementation\t\t", address(implementation));
         bytes memory data = abi.encode(Pomace.initialize.selector);
         pomace = Pomace(address(new PomaceProxy(implementation, data))); // nonce + 1

@@ -203,6 +203,6 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
         uint256 expiry = block.timestamp + 1 days;
         uint256 strikePrice = 4000 * UNIT;
         uint256 settlementWindow = 300;
-        tokenId = getTokenId(TokenType.CALL, productId, expiry, strikePrice, settlementWindow);
+        tokenId = getTokenId(TokenType.CALL, productIdEthCollat, expiry, strikePrice, settlementWindow);
     }
 }

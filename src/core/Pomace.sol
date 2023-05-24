@@ -12,6 +12,7 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/Reen
 // interfaces
 import {IERC20Metadata} from "openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
 import {IOptionToken} from "../interfaces/IOptionToken.sol";
+import {IOracle} from "../interfaces/IOracle.sol";
 import {IMarginEngine} from "../interfaces/IMarginEngine.sol";
 
 // librarise
@@ -29,7 +30,7 @@ import "../config/errors.sol";
 
 /**
  * @title   Pomace
- * @author  @antoncoding, @dsshap
+ * @author  @dsshap, @antoncoding
  * @dev     This contract serves as the registry of the system who system.
  */
 contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
@@ -42,6 +43,9 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
 
     /// @dev optionToken address
     IOptionToken public immutable optionToken;
+
+    /// @dev oracle address
+    IOracle public immutable oracle;
 
     /*///////////////////////////////////////////////////////////////
                          State Variables V1
@@ -65,6 +69,10 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     /// @dev address => engineId
     mapping(address => uint8) public engineIds;
 
+    /// @dev A bitmap of asset that are marginable
+    ///      assetId => assetId masks
+    mapping(uint256 => uint256) private collateralizable;
+
     /*///////////////////////////////////////////////////////////////
                                 Events
     //////////////////////////////////////////////////////////////*/
@@ -72,6 +80,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     event OptionSettled(address account, uint256 tokenId, uint256 amountSettled, uint256 debt, uint256 payout);
     event AssetRegistered(address asset, uint8 id);
     event MarginEngineRegistered(address engine, uint8 id);
+    event CollateralizableMaskSet(address asset0, address asset1, bool value);
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
@@ -79,8 +88,9 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
 
     /// @dev set immutables in constructor
     /// @dev also set the implementation contract to initialized = true
-    constructor(address _optionToken) initializer {
+    constructor(address _optionToken, address _oracle) initializer {
         optionToken = IOptionToken(_optionToken);
+        oracle = IOracle(_oracle);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -107,6 +117,31 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     /*///////////////////////////////////////////////////////////////
                             External Functions
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice  sets the Collateralizable Mask for a pair of assets
+     * @param _asset0 the address of the asset 0
+     * @param _asset1 the address of the asset 1
+     * @param _value is margin-able
+     */
+    function setCollateralizableMask(address _asset0, address _asset1, bool _value) external {
+        _checkOwner();
+
+        uint256 collateralId = assetIds[_asset0];
+        uint256 mask = 1 << assetIds[_asset1];
+
+        if (_value) collateralizable[collateralId] |= mask;
+        else collateralizable[collateralId] &= ~mask;
+
+        emit CollateralizableMaskSet(_asset0, _asset1, _value);
+    }
+
+    /**
+     * @dev check if a pair of assets are collateralizable
+     */
+    function isCollateralizable(address _asset0, address _asset1) external view returns (bool) {
+        return _isCollateralizable(assetIds[_asset0], assetIds[_asset1]);
+    }
 
     /**
      * @dev parse product id into composing asset and engine addresses
@@ -371,10 +406,19 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @dev make sure that the tokenId make sense
      */
     function _isValidTokenIdToMint(uint256 _tokenId) internal view {
-        (,, uint64 expiry,, uint64 settlementWindow) = _tokenId.parseTokenId();
+        (TokenType tokenType, uint32 productId, uint64 expiry,, uint64 settlementWindow) = _tokenId.parseTokenId();
 
         // check settlement window
         if (settlementWindow == 0) revert PM_InvalidSettlementWindow();
+
+        (, uint8 underlyingId, uint8 strikeId, uint8 collateralId) = productId.parseProductId();
+
+        if (tokenType == TokenType.CALL && underlyingId != collateralId && !_isCollateralizable(underlyingId, collateralId)) {
+            revert PM_InvalidCollateral();
+        }
+        if (tokenType == TokenType.PUT && strikeId != collateralId && !_isCollateralizable(strikeId, collateralId)) {
+            revert PM_InvalidCollateral();
+        }
 
         // check expiry
         if (expiry <= block.timestamp) revert PM_InvalidExpiry();
@@ -404,28 +448,49 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
 
         if (block.timestamp > expiry + settlementWindow) return (address(0), 0, 0, 0, 0);
 
-        (uint8 engineId, uint8 underlyingId, uint8 strikeId,) = ProductIdUtil.parseProductId(productId);
+        (uint8 engineId, uint8 underlyingId, uint8 strikeId, uint8 collateralId) = productId.parseProductId();
 
         engine = engines[engineId];
 
-        // puts can only be collateralized in strike
-        uint256 strikeAmount = uint256(strikePrice).convertDecimals(UNIT_DECIMALS, assets[strikeId].decimals);
+        uint256 underlyingValue;
+        uint256 strikeValue;
 
-        // calls can only be collateralized in underlying
-        uint256 underlyingAmount = UNIT.convertDecimals(UNIT_DECIMALS, assets[underlyingId].decimals);
+        // calculate value of collateral if not underlying or strike
+        if (tokenType == TokenType.CALL && collateralId != underlyingId) {
+            if (!_isCollateralizable(underlyingId, collateralId)) revert PM_InvalidCollateral();
 
+            AssetDetail memory collateralDetail = assets[collateralId];
+
+            uint256 collateralPrice = _getSettlementPrice(collateralDetail.addr, assets[underlyingId].addr, expiry);
+            underlyingValue = UNIT.mulDivDown(UNIT, collateralPrice);
+
+            underlyingValue = underlyingValue.convertDecimals(UNIT_DECIMALS, collateralDetail.decimals);
+        } else if (tokenType == TokenType.PUT && collateralId != strikeId) {
+            if (!_isCollateralizable(strikeId, collateralId)) revert PM_InvalidCollateral();
+
+            AssetDetail memory collateralDetail = assets[collateralId];
+
+            uint256 collateralPrice = _getSettlementPrice(collateralDetail.addr, assets[strikeId].addr, expiry);
+            strikeValue = uint256(strikePrice).mulDivDown(UNIT, collateralPrice);
+
+            strikeValue = strikeValue.convertDecimals(UNIT_DECIMALS, collateralDetail.decimals);
+        }
+
+        // setting default values if not set in above section
+        if (underlyingValue == 0) underlyingValue = UNIT.convertDecimals(UNIT_DECIMALS, assets[underlyingId].decimals);
+        if (strikeValue == 0) strikeValue = uint256(strikePrice).convertDecimals(UNIT_DECIMALS, assets[strikeId].decimals);
+
+        payoutId = collateralId;
         if (tokenType == TokenType.CALL) {
             debtId = strikeId;
-            debtPerOption = strikeAmount;
+            debtPerOption = strikeValue;
 
-            payoutId = underlyingId;
-            payoutPerOption = underlyingAmount;
+            payoutPerOption = underlyingValue;
         } else if (tokenType == TokenType.PUT) {
             debtId = underlyingId;
-            debtPerOption = underlyingAmount;
+            debtPerOption = underlyingValue;
 
-            payoutId = strikeId;
-            payoutPerOption = strikeAmount;
+            payoutPerOption = strikeValue;
         }
     }
 
@@ -453,15 +518,24 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     }
 
     /**
+     * @dev check if a pair of assetIds are collateralizable
+     */
+    function _isCollateralizable(uint8 _assetId0, uint8 _assetId1) internal view returns (bool) {
+        if (_assetId0 == _assetId1) return true;
+
+        uint256 mask = 1 << _assetId1;
+        return collateralizable[_assetId0] & mask != 0;
+    }
+
+    /**
      * @dev check settlement price is finalized from oracle, and return price
-     * @param _oracle oracle contract address
      * @param _base base asset (ETH is base asset while requesting ETH / USD)
      * @param _quote quote asset (USD is quote asset while requesting ETH / USD)
      * @param _expiry expiry timestamp
      */
-    function _getSettlementPrice(address _oracle, address _base, address _quote, uint256 _expiry)
-        internal
-        view
-        returns (uint256)
-    {}
+    function _getSettlementPrice(address _base, address _quote, uint256 _expiry) internal view returns (uint256) {
+        (uint256 price, bool isFinalized) = oracle.getPriceAtExpiry(_base, _quote, _expiry);
+        if (!isFinalized) revert PM_PriceNotFinalized();
+        return price;
+    }
 }

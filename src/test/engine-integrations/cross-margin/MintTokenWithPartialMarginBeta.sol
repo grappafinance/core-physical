@@ -46,6 +46,11 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         lsEthId = pomace.registerAsset(address(lsEth));
         usdtId = pomace.registerAsset(address(usdt));
 
+        pomace.setCollateralizableMask(address(weth), address(lsEth), true);
+        pomace.setCollateralizableMask(address(usdc), address(sdyc), true);
+        pomace.setCollateralizableMask(address(usdc), address(usdt), true);
+        pomace.setCollateralizableMask(address(usdt), address(sdyc), true);
+
         engine.setPartialMarginMask(address(weth), address(lsEth), true);
         engine.setPartialMarginMask(address(usdc), address(sdyc), true);
         engine.setPartialMarginMask(address(usdc), address(usdt), true);
