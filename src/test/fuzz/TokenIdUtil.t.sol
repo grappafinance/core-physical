@@ -7,57 +7,57 @@ import {TokenIdUtil} from "../../libraries/TokenIdUtil.sol";
 import "../../config/enums.sol";
 
 contract TokenIdUtilTest is Test {
-    function testTokenIdHigherThan0(uint8 tokenType, uint40 productId, uint64 expiry, uint64 longStrike, uint64 shortStrike)
+    function testTokenIdHigherThan0(uint8 tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 settlementWindow)
         public
     {
-        vm.assume(tokenType < 4);
+        vm.assume(tokenType < 2);
         vm.assume(productId > 0);
 
-        uint256 id = TokenIdUtil.getTokenId(TokenType(tokenType), productId, expiry, longStrike, shortStrike);
+        uint256 id = TokenIdUtil.getTokenId(TokenType(tokenType), productId, expiry, strike, settlementWindow);
 
         assertGt(id, 0);
     }
 
     function testFormatAndParseAreMirrored(
         uint8 tokenType,
-        uint40 productId,
+        uint32 productId,
         uint64 expiry,
-        uint64 longStrike,
-        uint64 shortStrike
+        uint64 strike,
+        uint64 settlementWindow
     ) public {
-        vm.assume(tokenType < 4);
+        vm.assume(tokenType < 2);
         vm.assume(productId > 0);
 
-        uint256 id = TokenIdUtil.getTokenId(TokenType(tokenType), productId, expiry, longStrike, shortStrike);
-        (TokenType _tokenType, uint40 _productId, uint64 _expiry, uint64 _longStrike, uint64 _shortStrike) =
+        uint256 id = TokenIdUtil.getTokenId(TokenType(tokenType), productId, expiry, strike, settlementWindow);
+        (TokenType _tokenType, uint32 _productId, uint64 _expiry, uint64 _strike, uint64 _settlementWindow) =
             TokenIdUtil.parseTokenId(id);
 
         assertEq(uint8(tokenType), uint8(_tokenType));
         assertEq(productId, _productId);
         assertEq(expiry, _expiry);
-        assertEq(longStrike, _longStrike);
-        assertEq(shortStrike, _shortStrike);
+        assertEq(strike, _strike);
+        assertEq(settlementWindow, _settlementWindow);
     }
 
     function testGetAndParseAreMirrored(
         uint8 tokenType,
-        uint40 productId,
+        uint32 productId,
         uint256 expiry,
-        uint256 longStrike,
-        uint256 shortStrike
+        uint256 strike,
+        uint256 settlementWindow
     ) public {
-        vm.assume(tokenType < 4);
+        vm.assume(tokenType < 2);
         vm.assume(productId > 0);
 
         uint256 id =
-            TokenIdUtil.getTokenId(TokenType(tokenType), productId, uint64(expiry), uint64(longStrike), uint64(shortStrike));
-        (TokenType _tokenType, uint40 _productId, uint64 _expiry, uint64 _longStrike, uint64 _shortStrike) =
+            TokenIdUtil.getTokenId(TokenType(tokenType), productId, uint64(expiry), uint64(strike), uint64(settlementWindow));
+        (TokenType _tokenType, uint32 _productId, uint64 _expiry, uint64 _strike, uint64 _settlementWindow) =
             TokenIdUtil.parseTokenId(id);
 
         assertEq(tokenType, uint8(_tokenType));
         assertEq(productId, _productId);
         assertEq(uint64(expiry), _expiry);
-        assertEq(uint64(longStrike), _longStrike);
-        assertEq(uint64(shortStrike), _shortStrike);
+        assertEq(uint64(strike), _strike);
+        assertEq(uint64(settlementWindow), _settlementWindow);
     }
 }

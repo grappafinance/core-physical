@@ -10,10 +10,10 @@ import "../../config/types.sol";
 import "../../config/errors.sol";
 
 /**
- * @title   MockGrappaV2
+ * @title   MockPomaceV2
  * @notice  Mock contract to test upgradability
  */
-contract MockGrappaV2 is UUPSUpgradeable {
+contract MockPomaceV2 is UUPSUpgradeable {
     function version() external pure returns (uint256) {
         return 2;
     }

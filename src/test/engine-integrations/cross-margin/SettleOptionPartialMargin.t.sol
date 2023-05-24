@@ -21,26 +21,36 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
     uint8 internal lsEthId;
     uint8 internal sdycId;
 
-    uint40 internal pidLsEthCollat;
-    uint40 internal pidSdycCollat;
+    uint32 internal pidLsEthCollat;
+    uint32 internal pidSdycCollat;
 
     uint256 public expiry;
+    uint256 public settlementWindow;
 
     function setUp() public {
+        weth.mint(address(this), 1000 * 1e18);
+        weth.approve(address(engine), type(uint256).max);
+
+        usdc.mint(address(this), 100_000 * 1e16);
+        usdc.approve(address(engine), type(uint256).max);
+
         lsEth = new MockERC20("LsETH", "LsETH", 18);
         vm.label(address(lsEth), "LsETH");
 
         sdyc = new MockERC20("SDYC", "SDYC", 6);
         vm.label(address(sdyc), "SDYC");
 
-        lsEthId = grappa.registerAsset(address(lsEth));
-        sdycId = grappa.registerAsset(address(sdyc));
+        lsEthId = pomace.registerAsset(address(lsEth));
+        sdycId = pomace.registerAsset(address(sdyc));
+
+        pomace.setCollateralizableMask(address(weth), address(lsEth), true);
+        pomace.setCollateralizableMask(address(usdc), address(sdyc), true);
 
         engine.setPartialMarginMask(address(weth), address(lsEth), true);
         engine.setPartialMarginMask(address(usdc), address(sdyc), true);
 
-        pidLsEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(lsEth));
-        pidSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(sdyc));
+        pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
+        pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));
 
         lsEth.mint(address(this), 100 * 1e18);
         lsEth.approve(address(engine), type(uint256).max);
@@ -49,19 +59,20 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         sdyc.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
+        settlementWindow = 300;
 
         oracle.setSpotPrice(address(weth), 3000 * UNIT);
         oracle.setSpotPrice(address(lsEth), 3000 * UNIT);
-
         oracle.setSpotPrice(address(sdyc), 1 * UNIT);
+        oracle.setSpotPrice(address(usdc), 1 * UNIT);
     }
 
-    function testCallITM() public {
+    function testCall() public {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 1 * 1e18;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount);
@@ -71,34 +82,38 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         uint256 wethExpiryPrice = 5000 * UNIT;
         uint256 lsEthExpiryPrice = 5200 * UNIT; // staked eth worth more due to rewards
 
-        oracle.setExpiryPrice(address(weth), address(usdc), wethExpiryPrice);
-        oracle.setExpiryPrice(address(lsEth), address(usdc), lsEthExpiryPrice);
+        oracle.setExpiryPrice(address(lsEth), address(weth), lsEthExpiryPrice * UNIT / wethExpiryPrice);
 
         vm.warp(expiry);
 
         uint256 lsEthBefore = lsEth.balanceOf(alice);
-        uint256 expectedPayout = (wethExpiryPrice - strikePrice) * UNIT / lsEthExpiryPrice * (depositAmount / UNIT);
+        uint256 expectedPayout = wethExpiryPrice * UNIT / lsEthExpiryPrice * (depositAmount / UNIT);
 
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
 
         uint256 lsEthAfter = lsEth.balanceOf(alice);
         assertEq(lsEthAfter, lsEthBefore + expectedPayout);
+
+        vm.warp(expiry + settlementWindow + 1);
 
         actions = new ActionArgs[](1);
         actions[0] = createSettleAction();
         engine.execute(address(this), actions);
 
         (,, Balance[] memory collateralsAfter) = engine.marginAccounts(address(this));
-        assertEq(collateralsAfter.length, 1);
+        assertEq(collateralsAfter.length, 2);
+        assertEq(collateralsAfter[0].collateralId, lsEthId);
         assertEq(collateralsAfter[0].amount, depositAmount - expectedPayout);
+        assertEq(collateralsAfter[1].collateralId, usdcId);
+        assertEq(collateralsAfter[1].amount, 4000 * 1e6);
     }
 
-    function testPutITM() public {
+    function testPut() public {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
         uint256 depositAmount = 2000 * 1e6;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount);
@@ -114,19 +129,24 @@ contract TestSettleOptionPartialMargin_CM is CrossMarginFixture {
         vm.warp(expiry);
 
         uint256 sdycBefore = sdyc.balanceOf(alice);
-        uint256 expectedPayout = (strikePrice - wethExpiryPrice) * UNIT / sdycExpiryPrice;
+        uint256 expectedPayout = strikePrice * UNIT / sdycExpiryPrice;
 
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
 
         uint256 sdycAfter = sdyc.balanceOf(alice);
         assertEq(sdycAfter, sdycBefore + expectedPayout);
+
+        vm.warp(expiry + settlementWindow + 1);
 
         actions = new ActionArgs[](1);
         actions[0] = createSettleAction();
         engine.execute(address(this), actions);
 
         (,, Balance[] memory collateralsAfter) = engine.marginAccounts(address(this));
-        assertEq(collateralsAfter.length, 1);
+        assertEq(collateralsAfter.length, 2);
+        assertEq(collateralsAfter[0].collateralId, sdycId);
         assertEq(collateralsAfter[0].amount, depositAmount - expectedPayout);
+        assertEq(collateralsAfter[1].collateralId, wethId);
+        assertEq(collateralsAfter[1].amount, 1 * 1e18);
     }
 }

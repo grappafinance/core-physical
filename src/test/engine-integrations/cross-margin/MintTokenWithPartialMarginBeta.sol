@@ -23,13 +23,14 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     uint8 internal usdtId;
 
     // usdc strike & sdyc collateralized  call / put
-    uint40 internal pidSdycCollat;
-    uint40 internal pidUsdtSdycCollat;
+    uint32 internal pidSdycCollat;
+    uint32 internal pidUsdtSdycCollat;
 
     // eth strike & lsEth collateralized call / put
-    uint40 internal pidLsEthCollat;
+    uint32 internal pidLsEthCollat;
 
     uint256 public expiry;
+    uint256 public settlementWindow;
 
     function setUp() public {
         lsEth = new MockERC20("LsETH", "LsETH", 18);
@@ -41,18 +42,23 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         usdt = new MockERC20("USDT", "USDT", 6);
         vm.label(address(usdt), "USDT");
 
-        sdycId = grappa.registerAsset(address(sdyc));
-        lsEthId = grappa.registerAsset(address(lsEth));
-        usdtId = grappa.registerAsset(address(usdt));
+        sdycId = pomace.registerAsset(address(sdyc));
+        lsEthId = pomace.registerAsset(address(lsEth));
+        usdtId = pomace.registerAsset(address(usdt));
+
+        pomace.setCollateralizableMask(address(weth), address(lsEth), true);
+        pomace.setCollateralizableMask(address(usdc), address(sdyc), true);
+        pomace.setCollateralizableMask(address(usdc), address(usdt), true);
+        pomace.setCollateralizableMask(address(usdt), address(sdyc), true);
 
         engine.setPartialMarginMask(address(weth), address(lsEth), true);
         engine.setPartialMarginMask(address(usdc), address(sdyc), true);
         engine.setPartialMarginMask(address(usdc), address(usdt), true);
         engine.setPartialMarginMask(address(usdt), address(sdyc), true);
 
-        pidSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(sdyc));
-        pidUsdtSdycCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdt), address(sdyc));
-        pidLsEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(lsEth));
+        pidSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(sdyc));
+        pidUsdtSdycCollat = pomace.getProductId(address(engine), address(weth), address(usdt), address(sdyc));
+        pidLsEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(lsEth));
 
         sdyc.mint(address(this), 1000_000 * 1e6);
         sdyc.approve(address(engine), type(uint256).max);
@@ -64,8 +70,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         lsEth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
+        settlementWindow = 300;
     }
 
     function testRemovePartialMarginMask() public {
@@ -91,7 +96,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount);
@@ -113,8 +118,8 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, 0);
-        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId1 = getTokenId(TokenType.CALL, pidLsEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](3);
         actions[0] = createAddCollateralAction(lsEthId, address(this), depositAmount * 2);
@@ -140,7 +145,7 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount);
@@ -162,8 +167,8 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, 0);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidSdycCollat, expiry, strikePrice, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](3);
         actions[0] = createAddCollateralAction(sdycId, address(this), depositAmount * 2);
@@ -186,8 +191,8 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     function testCannotMintTooLittleCollateral() public {
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, 0);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, 0);
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](4);
         actions[0] = createAddCollateralAction(usdtId, address(this), 900 * 1e6);
@@ -203,9 +208,9 @@ contract TestMintWithPartialMarginBeta_CM is CrossMarginFixture {
     function testMintMixedBag() public {
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, 0);
-        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, 0);
-        uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, 0);
+        uint256 tokenId1 = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, 1000 * UNIT, settlementWindow);
+        uint256 tokenId2 = getTokenId(TokenType.PUT, pidUsdtSdycCollat, expiry, 2000 * UNIT, settlementWindow);
+        uint256 tokenId3 = getTokenId(TokenType.CALL, pidEthCollat, expiry, 3000 * UNIT, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](6);
         actions[0] = createAddCollateralAction(usdtId, address(this), 1800 * 1e6);

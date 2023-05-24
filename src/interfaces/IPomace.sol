@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../config/types.sol";
 
-interface IGrappa {
-    function getDetailFromProductId(uint40 _productId)
+interface IPomace {
+    function getDetailFromProductId(uint32 _productId)
         external
         view
         returns (
-            address oracle,
             address engine,
             address underlying,
             uint8 underlyingDecimals,
@@ -32,17 +31,22 @@ interface IGrappa {
 
     function oracles(uint8 _id) external view returns (address oracle);
 
-    function getPayout(uint256 tokenId, uint64 amount)
+    function getDebtAndPayout(uint256 tokenId, uint64 amount)
         external
         view
-        returns (address engine, address collateral, uint256 payout);
+        returns (address engine, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout);
+
+    function batchGetDebtAndPayouts(uint256[] calldata tokenId, uint256[] calldata amount)
+        external
+        view
+        returns (Balance[] memory debts, Balance[] memory payouts);
 
     function getProductId(address oracle, address engine, address underlying, address strike, address collateral)
         external
         view
-        returns (uint40 id);
+        returns (uint32 id);
 
-    function getTokenId(TokenType tokenType, uint40 productId, uint256 expiry, uint256 longStrike, uint256 shortStrike)
+    function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 strike, uint256 settlementWindow)
         external
         view
         returns (uint256 id);
@@ -52,9 +56,12 @@ interface IGrappa {
      * @param _account who to settle for
      * @param _tokenId  tokenId of option token to burn
      * @param _amount   amount to settle
+     * @return debt amount collected
      * @return payout amount paid out
      */
-    function settleOption(address _account, uint256 _tokenId, uint256 _amount) external returns (uint256 payout);
+    function settleOption(address _account, uint256 _tokenId, uint256 _amount)
+        external
+        returns (Balance memory debt, Balance memory payout);
 
     /**
      * @notice burn array of option tokens and get out cash value at expiry
@@ -62,9 +69,5 @@ interface IGrappa {
      * @param _tokenIds array of tokenIds to burn
      * @param _amounts   array of amounts to burn
      */
-    function batchSettleOptions(address _account, uint256[] memory _tokenIds, uint256[] memory _amounts)
-        external
-        returns (Balance[] memory payouts);
-
-    function batchGetPayouts(uint256[] memory _tokenIds, uint256[] memory _amounts) external returns (Balance[] memory payouts);
+    function batchSettleOptions(address _account, uint256[] memory _tokenIds, uint256[] memory _amounts) external;
 }

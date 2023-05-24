@@ -6,12 +6,11 @@ optimizer_runs = 100000
 
 gas_reports = [
   # "*",
-  "Grappa",
+  "Pomace",
   "OptionToken",
-  "FullMarginEngine",
   "CrossMarginEngine",
-  "AdvancedMarginEngine",
-  "ChainlinkOracle"
+  "ChainlinkOracle",
+  "ChainlinkOracleDisputable"
 ]
 
 [fmt]

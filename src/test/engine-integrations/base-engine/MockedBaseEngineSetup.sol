@@ -5,13 +5,10 @@ import "forge-std/Test.sol";
 
 import "../../mocks/MockERC20.sol";
 import "../../mocks/MockOracle.sol";
-import "../../mocks/MockChainlinkAggregator.sol";
-import "../../mocks/MockDebitSpreadEngine.sol";
+import "../../mocks/MockEngine.sol";
 
-// import "../../../core/engines/.sol";
-import "../../../core/engines/advanced-margin/VolOracle.sol";
-import "../../../core/Grappa.sol";
-import "../../../core/GrappaProxy.sol";
+import "../../../core/Pomace.sol";
+import "../../../core/PomaceProxy.sol";
 import "../../../core/OptionToken.sol";
 
 import "../../../config/enums.sol";
@@ -23,8 +20,8 @@ import {ActionHelper} from "../../shared/ActionHelper.sol";
 
 // solhint-disable max-states-count
 abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
-    MockDebitSpreadEngine internal engine;
-    Grappa internal grappa;
+    MockEngine internal engine;
+    Pomace internal pomace;
     OptionToken internal option;
 
     MockERC20 internal usdc;
@@ -33,16 +30,15 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
     MockOracle internal oracle;
 
     // usdc collateralized call / put
-    uint40 internal productId;
+    uint32 internal productId;
 
     // eth collateralized call / put
-    uint40 internal productIdEthCollat;
+    uint32 internal productIdEthCollat;
 
     uint8 internal usdcId;
     uint8 internal wethId;
 
     uint8 internal engineId;
-    uint8 internal oracleId;
 
     constructor() {
         usdc = new MockERC20("USDC", "USDC", 6); // nonce: 1
@@ -52,27 +48,26 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
         oracle = new MockOracle(); // nonce: 3
 
         // predict address of margin account and use it here
-        address grappaAddr = predictAddress(address(this), 6);
+        address pomaceAddr = predictAddress(address(this), 6);
 
-        option = new OptionToken(grappaAddr, address(0)); // nonce: 4
+        option = new OptionToken(pomaceAddr, address(0)); // nonce: 4
 
-        address grappaImplementation = address(new Grappa(address(option))); // nonce: 5
+        address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
 
-        bytes memory data = abi.encode(Grappa.initialize.selector);
+        bytes memory data = abi.encode(Pomace.initialize.selector);
 
-        grappa = Grappa(address(new GrappaProxy(grappaImplementation, data))); // 6
+        pomace = Pomace(address(new PomaceProxy(pomaceImplementation, data))); // 6
 
-        engine = new MockDebitSpreadEngine(address(grappa), address(option)); // nonce 7
+        engine = new MockEngine(address(pomace), address(option)); // nonce 7
 
         // register products
-        usdcId = grappa.registerAsset(address(usdc));
-        wethId = grappa.registerAsset(address(weth));
+        usdcId = pomace.registerAsset(address(usdc));
+        wethId = pomace.registerAsset(address(weth));
 
-        engineId = grappa.registerEngine(address(engine));
-        oracleId = grappa.registerOracle(address(oracle));
+        engineId = pomace.registerEngine(address(engine));
 
-        productId = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(usdc));
-        productIdEthCollat = grappa.getProductId(address(oracle), address(engine), address(weth), address(usdc), address(weth));
+        productId = pomace.getProductId(address(engine), address(weth), address(usdc), address(usdc));
+        productIdEthCollat = pomace.getProductId(address(engine), address(weth), address(usdc), address(weth));
     }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external virtual returns (bytes4) {

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
 import {OptionToken} from "../../core/OptionToken.sol";
-import {Grappa} from "../../core/Grappa.sol";
+import {Pomace} from "../../core/Pomace.sol";
 import {OptionTokenDescriptor} from "../../core/OptionTokenDescriptor.sol";
 import "../../libraries/TokenIdUtil.sol";
 import "../../libraries/ProductIdUtil.sol";
@@ -14,93 +14,54 @@ import "../../config/errors.sol";
 contract OptionTokenTest is Test {
     OptionToken public option;
 
-    address public grappa;
+    address public pomace;
     address public nftDescriptor;
 
     function setUp() public {
-        grappa = address(new Grappa(address(0)));
+        pomace = address(new Pomace(address(0), address(0)));
 
         nftDescriptor = address(new OptionTokenDescriptor());
 
-        option = new OptionToken(grappa, nftDescriptor);
+        option = new OptionToken(pomace, nftDescriptor);
     }
 
     function testCannotMint() public {
         uint8 engineId = 1;
 
         // put in valid tokenId
-        uint40 productId = ProductIdUtil.getProductId(0, engineId, 0, 0, 0);
+        uint32 productId = ProductIdUtil.getProductId(engineId, 0, 0, 0);
         uint256 expiry = block.timestamp + 1 days;
-        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.CALL_SPREAD, productId, uint64(expiry), 20, 40);
+        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.CALL, productId, uint64(expiry), 20, 40);
 
-        vm.expectRevert(GP_Not_Authorized_Engine.selector);
+        vm.expectRevert(PM_Not_Authorized_Engine.selector);
         option.mint(address(this), tokenId, 1000_000_000);
     }
 
     function testCannotBurn() public {
-        vm.expectRevert(GP_Not_Authorized_Engine.selector);
+        vm.expectRevert(PM_Not_Authorized_Engine.selector);
         option.burn(address(this), 0, 1000_000_000);
     }
 
-    function testCannotBurnGrappaOnly() public {
+    function testCannotBurnPomaceOnly() public {
         vm.expectRevert(NoAccess.selector);
-        option.burnGrappaOnly(address(this), 0, 1000_000_000);
+        option.burnPomaceOnly(address(this), 0, 1000_000_000);
 
         uint256[] memory ids = new uint256[](0);
         uint256[] memory amounts = new uint256[](0);
         vm.expectRevert(NoAccess.selector);
-        option.batchBurnGrappaOnly(address(this), ids, amounts);
+        option.batchBurnPomaceOnly(address(this), ids, amounts);
     }
 
-    function testCannotMintCreditCallSpread() public {
+    function testCannotMintZeroSettlementWindow() public {
         uint8 engineId = 1;
         uint256 expiry = block.timestamp + 1 days;
 
-        vm.mockCall(grappa, abi.encodeWithSelector(Grappa(grappa).engines.selector, engineId), abi.encode(address(this)));
+        vm.mockCall(pomace, abi.encodeWithSelector(Pomace(pomace).engines.selector, engineId), abi.encode(address(this)));
 
-        uint40 productId = ProductIdUtil.getProductId(0, engineId, 0, 0, 0);
-        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.CALL_SPREAD, productId, uint64(expiry), 40, 20);
+        uint32 productId = ProductIdUtil.getProductId(engineId, 0, 0, 0);
+        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.CALL, productId, uint64(expiry), 40, 0);
 
-        vm.expectRevert(GP_BadStrikes.selector);
-        option.mint(address(this), tokenId, 1);
-    }
-
-    function testCannotMintCreditPutSpread() public {
-        uint8 engineId = 1;
-        uint256 expiry = block.timestamp + 1 days;
-
-        vm.mockCall(grappa, abi.encodeWithSelector(Grappa(grappa).engines.selector, engineId), abi.encode(address(this)));
-
-        uint40 productId = ProductIdUtil.getProductId(0, engineId, 0, 0, 0);
-        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.PUT_SPREAD, productId, uint64(expiry), 20, 40);
-
-        vm.expectRevert(GP_BadStrikes.selector);
-        option.mint(address(this), tokenId, 1);
-    }
-
-    function testCannotMintCallWithShortStrike() public {
-        uint8 engineId = 1;
-        uint256 expiry = block.timestamp + 1 days;
-
-        vm.mockCall(grappa, abi.encodeWithSelector(Grappa(grappa).engines.selector, engineId), abi.encode(address(this)));
-
-        uint40 productId = ProductIdUtil.getProductId(0, engineId, 0, 0, 0);
-        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.CALL, productId, uint64(expiry), 20, 40);
-
-        vm.expectRevert(GP_BadStrikes.selector);
-        option.mint(address(this), tokenId, 1);
-    }
-
-    function testCannotMintPutWithShortStrike() public {
-        uint8 engineId = 1;
-        uint256 expiry = block.timestamp + 1 days;
-
-        vm.mockCall(grappa, abi.encodeWithSelector(Grappa(grappa).engines.selector, engineId), abi.encode(address(this)));
-
-        uint40 productId = ProductIdUtil.getProductId(0, engineId, 0, 0, 0);
-        uint256 tokenId = TokenIdUtil.getTokenId(TokenType.PUT, productId, uint64(expiry), 20, 40);
-
-        vm.expectRevert(GP_BadStrikes.selector);
+        vm.expectRevert(PM_InvalidSettlementWindow.selector);
         option.mint(address(this), tokenId, 1);
     }
 

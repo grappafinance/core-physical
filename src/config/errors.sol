@@ -2,9 +2,6 @@
 pragma solidity ^0.8.0;
 
 // for easier import
-import "../core/oracles/errors.sol";
-import "../core/engines/full-margin/errors.sol";
-import "../core/engines/advanced-margin/errors.sol";
 import "../core/engines/cross-margin/errors.sol";
 
 /* ------------------------ *
@@ -14,60 +11,39 @@ import "../core/engines/cross-margin/errors.sol";
 error NoAccess();
 
 /* ------------------------ *
- *      Grappa Errors       *
+ *      Pomace Errors       *
  * -----------------------  */
 
 /// @dev asset already registered
-error GP_AssetAlreadyRegistered();
+error PM_AssetAlreadyRegistered();
 
 /// @dev margin engine already registered
-error GP_EngineAlreadyRegistered();
+error PM_EngineAlreadyRegistered();
 
-/// @dev oracle already registered
-error GP_OracleAlreadyRegistered();
-
-/// @dev registring oracle doesn't comply with the max dispute period constraint.
-error GP_BadOracle();
-
-/// @dev amounts length speicified to batch settle doesn't match with tokenIds
-error GP_WrongArgumentLength();
+/// @dev amounts length specified to batch settle doesn't match with tokenIds
+error PM_WrongArgumentLength();
 
 /// @dev cannot settle an unexpired option
-error GP_NotExpired();
+error PM_NotExpired();
 
 /// @dev settlement price is not finalized yet
-error GP_PriceNotFinalized();
+error PM_PriceNotFinalized();
 
 /// @dev cannot mint token after expiry
-error GP_InvalidExpiry();
+error PM_InvalidExpiry();
 
-/// @dev put and call should not contain "short stirkes"
-error GP_BadStrikes();
+/// @dev cannot mint token with zero settlement window
+error PM_InvalidSettlementWindow();
+
+/// @dev cannot mint token with zero settlement window
+error PM_InvalidCollateral();
 
 /// @dev burn or mint can only be called by corresponding engine.
-error GP_Not_Authorized_Engine();
+error PM_Not_Authorized_Engine();
 
 /* ---------------------------- *
  *   Common BaseEngine Errors   *
  * ---------------------------  */
-
-/// @dev can only merge subaccount with put or call.
-error BM_CannotMergeSpread();
-
-/// @dev only spread position can be split
-error BM_CanOnlySplitSpread();
-
-/// @dev type of existing short token doesn't match the incoming token
-error BM_MergeTypeMismatch();
-
-/// @dev product type of existing short token doesn't match the incoming token
-error BM_MergeProductMismatch();
-
-/// @dev expiry of existing short token doesn't match the incoming token
-error BM_MergeExpiryMismatch();
-
-/// @dev cannot merge type with the same strike. (should use burn instead)
-error BM_MergeWithSameStrike();
 
 /// @dev account is not healthy / account is underwater
 error BM_AccountUnderwater();

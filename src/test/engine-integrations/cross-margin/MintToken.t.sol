@@ -16,6 +16,7 @@ import "../../../test/mocks/MockERC20.sol";
 // solhint-disable-next-line contract-name-camelcase
 contract TestMint_CM is CrossMarginFixture {
     uint256 public expiry;
+    uint256 public settlementWindow;
 
     function setUp() public {
         usdc.mint(address(this), 1000_000 * 1e6);
@@ -25,8 +26,7 @@ contract TestMint_CM is CrossMarginFixture {
         weth.approve(address(engine), type(uint256).max);
 
         expiry = block.timestamp + 14 days;
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
+        settlementWindow = 300;
     }
 
     function testMintCall() public {
@@ -35,7 +35,7 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(wethId, address(this), depositAmount);
@@ -57,7 +57,7 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
@@ -79,7 +79,7 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 callStrikePrice = 4000 * UNIT;
         uint256 callAmount = 1 * UNIT;
 
-        uint256 callTokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, callStrikePrice, 0);
+        uint256 callTokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, callStrikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](4);
         actions[0] = createAddCollateralAction(wethId, address(this), callDepositAmount);
@@ -90,7 +90,7 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 putStrikePrice = 2000 * UNIT;
         uint256 putAmount = 1 * UNIT;
 
-        uint256 putTokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, putStrikePrice, 0);
+        uint256 putTokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, putStrikePrice, settlementWindow);
 
         actions[2] = createAddCollateralAction(usdcId, address(this), putDepositAmount);
         actions[3] = createMintAction(putTokenId, address(this), putAmount);
@@ -119,12 +119,12 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, block.timestamp, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, block.timestamp, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createMintAction(tokenId, address(this), amount);
 
-        vm.expectRevert(GP_InvalidExpiry.selector);
+        vm.expectRevert(PM_InvalidExpiry.selector);
         engine.execute(address(this), actions);
     }
 
@@ -134,7 +134,7 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 strikePrice = 4000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
@@ -150,7 +150,7 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 strikePrice = 2000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.PUT, pidUsdcCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](2);
         actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
@@ -164,48 +164,12 @@ contract TestMint_CM is CrossMarginFixture {
         uint256 strikePrice = 3000 * UNIT;
         uint256 amount = 1 * UNIT;
 
-        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
+        uint256 tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
 
         ActionArgs[] memory actions = new ActionArgs[](1);
         actions[0] = createMintAction(tokenId, address(this), amount);
 
         vm.expectRevert(BM_AccountUnderwater.selector);
-        engine.execute(address(this), actions);
-    }
-
-    function testCannotMintCallSpread() public {
-        uint256 longStrike = 2800 * UNIT;
-        uint256 shortStrike = 2600 * UNIT;
-
-        uint256 depositAmount = longStrike - shortStrike;
-
-        uint256 amount = 1 * UNIT;
-
-        uint256 tokenId = getTokenId(TokenType.CALL_SPREAD, pidUsdcCollat, expiry, longStrike, shortStrike);
-
-        ActionArgs[] memory actions = new ActionArgs[](2);
-        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
-        actions[1] = createMintAction(tokenId, address(this), amount);
-
-        vm.expectRevert(CM_UnsupportedTokenType.selector);
-        engine.execute(address(this), actions);
-    }
-
-    function testCannotMintPutSpread() public {
-        uint256 longStrike = 2800 * UNIT;
-        uint256 shortStrike = 2600 * UNIT;
-
-        uint256 depositAmount = longStrike - shortStrike;
-
-        uint256 amount = 1 * UNIT;
-
-        uint256 tokenId = getTokenId(TokenType.PUT_SPREAD, pidUsdcCollat, expiry, longStrike, shortStrike);
-
-        ActionArgs[] memory actions = new ActionArgs[](2);
-        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
-        actions[1] = createMintAction(tokenId, address(this), amount);
-
-        vm.expectRevert(CM_UnsupportedTokenType.selector);
         engine.execute(address(this), actions);
     }
 }

@@ -8,7 +8,6 @@ import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {OptionTokenDescriptor} from "../../core/OptionTokenDescriptor.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
-import {MockOracle} from "../mocks/MockOracle.sol";
 
 import {MockTokenDescriptorV2} from "../mocks/MockOptionTokenDescriptorV2.sol";
 

@@ -13,6 +13,7 @@ import "../../../test/mocks/MockERC20.sol";
 
 contract Permissioned is CrossMarginFixture {
     uint256 public expiry;
+    uint256 public settlementWindow;
     uint256 public tokenId;
     uint256 public amount;
     uint256 public depositAmount;
@@ -33,10 +34,9 @@ contract Permissioned is CrossMarginFixture {
         amount = 1 * UNIT;
 
         expiry = block.timestamp + 14 days;
+        settlementWindow = 300;
 
-        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, 0);
-
-        oracle.setSpotPrice(address(weth), 3000 * UNIT);
+        tokenId = getTokenId(TokenType.CALL, pidEthCollat, expiry, strikePrice, settlementWindow);
     }
 
     function testCannotExecute() public {
@@ -64,27 +64,26 @@ contract Permissioned is CrossMarginFixture {
 
         _mintOptionToAlice();
 
-        oracle.setExpiryPrice(address(weth), address(usdc), 5000 * UNIT);
-
         vm.warp(expiry);
 
         vm.startPrank(alice);
         vm.expectRevert(NoAccess.selector);
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
     }
 
     function testAliceCanSettleOption() public {
         whitelist.setEngineAccess(address(this), true);
         whitelist.setEngineAccess(alice, true);
 
-        _mintOptionToAlice();
+        vm.prank(alice);
+        usdc.approve(address(engine), type(uint256).max);
 
-        oracle.setExpiryPrice(address(weth), address(usdc), 5000 * UNIT);
+        _mintOptionToAlice();
 
         vm.warp(expiry);
 
         vm.startPrank(alice);
-        grappa.settleOption(alice, tokenId, amount);
+        pomace.settleOption(alice, tokenId, amount);
         vm.stopPrank();
     }
 

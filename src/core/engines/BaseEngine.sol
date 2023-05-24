@@ -9,7 +9,7 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IERC1155} from "openzeppelin/token/ERC1155/IERC1155.sol";
 
 // interfaces
-import {IGrappa} from "../../interfaces/IGrappa.sol";
+import {IPomace} from "../../interfaces/IPomace.sol";
 import {IOptionToken} from "../../interfaces/IOptionToken.sol";
 
 // libraries
@@ -30,7 +30,7 @@ abstract contract BaseEngine {
     using SafeERC20 for IERC20;
     using TokenIdUtil for uint256;
 
-    IGrappa public immutable grappa;
+    IPomace public immutable pomace;
     IOptionToken public immutable optionToken;
 
     ///@dev maskedAccount => operator => allowedExecutionLeft
@@ -53,6 +53,8 @@ abstract contract BaseEngine {
 
     event OptionTokenRemoved(address subAccount, uint256 tokenId, uint64 amount);
 
+    event ExercisedToken(address subAccount, uint256 tokenId, uint256 amount);
+
     /// @dev emitted when an account is settled, with array of payouts
     event AccountSettled(address subAccount, Balance[] payouts);
 
@@ -65,8 +67,8 @@ abstract contract BaseEngine {
      * ========================================================= *
      */
 
-    constructor(address _grappa, address _optionToken) {
-        grappa = IGrappa(_grappa);
+    constructor(address _pomace, address _optionToken) {
+        pomace = IPomace(_pomace);
         optionToken = IOptionToken(_optionToken);
     }
 
@@ -103,16 +105,47 @@ abstract contract BaseEngine {
     }
 
     /**
+     * @dev hook to be invoked by Pomace to handle custom logic of settlement
+     */
+    function handleExercise(uint256 _tokenId, uint256 _debtPaid, uint256 _amountPaidOut) external virtual {}
+
+    /**
      * @notice payout to user on settlement.
-     * @dev this can only triggered by Grappa, would only be called on settlement.
+     * @dev this can only triggered by Pomace, would only be called on settlement.
      * @param _asset asset to transfer
-     * @param _recipient receiver address
+     * @param _sender sender of debt
      * @param _amount amount
      */
-    function payCashValue(address _asset, address _recipient, uint256 _amount) public virtual {
-        if (msg.sender != address(grappa)) revert NoAccess();
+    function _receiveDebtValue(address _asset, address _sender, uint256 _amount) internal virtual {
+        _checkIsPomace();
+
+        if (_sender != address(this)) IERC20(_asset).safeTransferFrom(_sender, address(this), _amount);
+    }
+
+    /**
+     * @notice payout to user on settlement.
+     * @dev this can only triggered by Pomace, would only be called on settlement.
+     * @param _asset asset to transfer
+     * @param _recipient receiver
+     * @param _amount amount
+     */
+    function _sendPayoutValue(address _asset, address _recipient, uint256 _amount) internal virtual {
+        _checkIsPomace();
+
         if (_recipient != address(this)) IERC20(_asset).safeTransfer(_recipient, _amount);
     }
+
+    // /**
+    //  * @notice payout to user on settlement.
+    //  * @dev this can only triggered by Pomace, would only be called on settlement.
+    //  * @param _asset asset to transfer
+    //  * @param _recipient receiver address
+    //  * @param _amount amount
+    //  */
+    // function payCashValue(address _asset, address _recipient, uint256 _amount) public virtual {
+    //     if (msg.sender != address(pomace)) revert NoAccess();
+    //     if (_recipient != address(this)) IERC20(_asset).safeTransfer(_recipient, _amount);
+    // }
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata) external virtual returns (bytes4) {
         return this.onERC1155Received.selector;
@@ -145,7 +178,7 @@ abstract contract BaseEngine {
         // update the account in state
         _addCollateralToAccount(_subAccount, collateralId, amount);
 
-        (address collateral,) = grappa.assets(collateralId);
+        (address collateral,) = pomace.assets(collateralId);
 
         emit CollateralAdded(_subAccount, collateral, amount);
 
@@ -164,7 +197,7 @@ abstract contract BaseEngine {
         // update the account in state
         _removeCollateralFromAccount(_subAccount, collateralId, amount);
 
-        (address collateral,) = grappa.assets(collateralId);
+        (address collateral,) = pomace.assets(collateralId);
 
         emit CollateralRemoved(_subAccount, collateral, amount);
 
@@ -248,6 +281,19 @@ abstract contract BaseEngine {
     }
 
     /**
+     * @notice  exercises a long token in margin account at expiry but before settlement window
+     * @dev     this updates the account storage
+     */
+    function _exerciseToken(address _subAccount, bytes calldata _data) internal virtual {
+        // decode parameters
+        (uint256 tokenId, uint64 amount) = abi.decode(_data, (uint256, uint64));
+
+        _exerciseTokenInAccount(_subAccount, tokenId, amount);
+
+        emit ExercisedToken(_subAccount, tokenId, amount);
+    }
+
+    /**
      * @notice  settle the margin account at expiry
      * @dev     this update the account storage
      */
@@ -281,6 +327,8 @@ abstract contract BaseEngine {
     function _increaseLongInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal virtual {}
 
     function _decreaseLongInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal virtual {}
+
+    function _exerciseTokenInAccount(address _subAccount, uint256 tokenId, uint64 amount) internal virtual {}
 
     function _settleAccount(address _subAccount, int80 payout) internal virtual {}
 
@@ -341,5 +389,12 @@ abstract contract BaseEngine {
      */
     function _isPrimaryAccountFor(address _primary, address _subAccount) internal pure returns (bool) {
         return (uint160(_primary) | 0xFF) == (uint160(_subAccount) | 0xFF);
+    }
+
+    /**
+     * @dev check if msg.sender is the marginAccount
+     */
+    function _checkIsPomace() internal view {
+        if (msg.sender != address(pomace)) revert NoAccess();
     }
 }
