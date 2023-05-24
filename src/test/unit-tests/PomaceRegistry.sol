@@ -168,27 +168,27 @@ contract CollateralizableCoTest is Test {
     function testCannotAddCollateralizableMask() public {
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(address(0xaacc));
-        pomace.setCollateralizableMask(weth, lseth, true);
+        pomace.setCollateralizable(weth, lseth, true);
     }
 
     function testAddCollateralizableMask() public {
-        pomace.setCollateralizableMask(weth, lseth, true);
+        pomace.setCollateralizable(weth, lseth, true);
 
         assert(pomace.isCollateralizable(weth, lseth));
     }
 
     function testRemoveCollateralizableMask() public {
-        pomace.setCollateralizableMask(weth, lseth, true);
-        pomace.setCollateralizableMask(weth, lseth, false);
+        pomace.setCollateralizable(weth, lseth, true);
+        pomace.setCollateralizable(weth, lseth, false);
 
         assert(!pomace.isCollateralizable(weth, lseth));
     }
 
     function testAddAndRemoveCollateralizableMask() public {
-        pomace.setCollateralizableMask(weth, lseth, true);
-        pomace.setCollateralizableMask(lseth, weth, true);
+        pomace.setCollateralizable(weth, lseth, true);
+        pomace.setCollateralizable(lseth, weth, true);
 
-        pomace.setCollateralizableMask(weth, lseth, false);
+        pomace.setCollateralizable(weth, lseth, false);
 
         assert(pomace.isCollateralizable(lseth, weth));
         assert(!pomace.isCollateralizable(weth, lseth));
