@@ -23,7 +23,8 @@ contract Deploy is Script, Utilities {
         vm.startBroadcast();
 
         // deploy and register Oracles
-        (, address clOracleDisputable) = deployOracles();
+        // (, address clOracleDisputable) = deployOracles();
+        address clOracleDisputable = vm.envAddress("OracleDisputable");
 
         // Deploy core components
         deployCore(clOracleDisputable);
@@ -39,7 +40,7 @@ contract Deploy is Script, Utilities {
     }
 
     /// @dev deploy core contracts: Upgradable Pomace, non-upgradable OptionToken with descriptor
-    function deployCore(address oracle) public returns (Pomace pomace, address optionDesciptor, address optionToken) {
+    function deployCore(address oracle) public returns (Pomace pomace, address optionDescriptor, address optionToken) {
         uint256 nonce = vm.getNonce(msg.sender);
         console.log("nonce", nonce);
         console.log("Deployer", msg.sender);
@@ -56,16 +57,16 @@ contract Deploy is Script, Utilities {
 
         console.log("pomace proxy \t\t\t", address(pomace));
 
-        // =================== Deploy Option Desciptor (Upgradable) =============== //
+        // =================== Deploy Option Descriptor (Upgradable) =============== //
 
         address descriptorImpl = address(new OptionTokenDescriptor()); // nonce + 2
         bytes memory descriptorInitData = abi.encode(OptionTokenDescriptor.initialize.selector);
-        optionDesciptor = address(new ERC1967Proxy(descriptorImpl, descriptorInitData)); // nonce + 3
-        console.log("optionToken descriptor\t", optionDesciptor);
+        optionDescriptor = address(new ERC1967Proxy(descriptorImpl, descriptorInitData)); // nonce + 3
+        console.log("optionToken descriptor\t", optionDescriptor);
 
         // =============== Deploy OptionToken ================= //
 
-        optionToken = address(new OptionToken(address(pomace), optionDesciptor)); // nonce + 4
+        optionToken = address(new OptionToken(address(pomace), optionDescriptor)); // nonce + 4
         console.log("optionToken\t\t\t", optionToken);
 
         // revert if deployed contract is different than what we set in Pomace
