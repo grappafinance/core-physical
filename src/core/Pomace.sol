@@ -15,9 +15,8 @@ import {IOptionToken} from "../interfaces/IOptionToken.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IMarginEngine} from "../interfaces/IMarginEngine.sol";
 
-// librarise
+// libraries
 import {BalanceUtil} from "../libraries/BalanceUtil.sol";
-import {MoneynessLib} from "../libraries/MoneynessLib.sol";
 import {NumberUtil} from "../libraries/NumberUtil.sol";
 import {ProductIdUtil} from "../libraries/ProductIdUtil.sol";
 import {TokenIdUtil} from "../libraries/TokenIdUtil.sol";
@@ -80,7 +79,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     event OptionSettled(address account, uint256 tokenId, uint256 amountSettled, uint256 debt, uint256 payout);
     event AssetRegistered(address asset, uint8 id);
     event MarginEngineRegistered(address engine, uint8 id);
-    event CollateralizableMaskSet(address asset0, address asset1, bool value);
+    event CollateralizableSet(address asset0, address asset1, bool value);
 
     /*///////////////////////////////////////////////////////////////
                 Constructor for implementation Contract
@@ -124,7 +123,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @param _asset1 the address of the asset 1
      * @param _value is margin-able
      */
-    function setCollateralizableMask(address _asset0, address _asset1, bool _value) external {
+    function setCollateralizable(address _asset0, address _asset1, bool _value) external {
         _checkOwner();
 
         uint256 collateralId = assetIds[_asset0];
@@ -133,7 +132,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
         if (_value) collateralizable[collateralId] |= mask;
         else collateralizable[collateralId] &= ~mask;
 
-        emit CollateralizableMaskSet(_asset0, _asset1, _value);
+        emit CollateralizableSet(_asset0, _asset1, _value);
     }
 
     /**
@@ -141,6 +140,13 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      */
     function isCollateralizable(address _asset0, address _asset1) external view returns (bool) {
         return _isCollateralizable(assetIds[_asset0], assetIds[_asset1]);
+    }
+
+    /**
+     * @dev check if a pair of assets are collateralizable
+     */
+    function isCollateralizable(uint8 _asset0, uint8 _asset1) external view returns (bool) {
+        return _isCollateralizable(_asset0, _asset1);
     }
 
     /**
@@ -182,7 +188,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     function getDetailFromTokenId(uint256 _tokenId)
         external
         pure
-        returns (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 settlementWindow)
+        returns (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 exerciseWindow)
     {
         return TokenIdUtil.parseTokenId(_tokenId);
     }
@@ -209,14 +215,14 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @param _productId if of the product
      * @param _expiry timestamp of option expiry
      * @param _strike strike price of the long option, with 6 decimals
-     * @param _settlementWindow strike price of the short (upper bond for call and lower bond for put) if this is a spread. 6 decimals
+     * @param _exerciseWindow strike price of the short (upper bond for call and lower bond for put) if this is a spread. 6 decimals
      */
-    function getTokenId(TokenType _tokenType, uint32 _productId, uint256 _expiry, uint256 _strike, uint256 _settlementWindow)
+    function getTokenId(TokenType _tokenType, uint32 _productId, uint256 _expiry, uint256 _strike, uint256 _exerciseWindow)
         external
         pure
         returns (uint256 id)
     {
-        id = TokenIdUtil.getTokenId(_tokenType, _productId, uint64(_expiry), uint64(_strike), uint64(_settlementWindow));
+        id = TokenIdUtil.getTokenId(_tokenType, _productId, uint64(_expiry), uint64(_strike), uint64(_exerciseWindow));
     }
 
     /**
@@ -406,10 +412,10 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @dev make sure that the tokenId make sense
      */
     function _isValidTokenIdToMint(uint256 _tokenId) internal view {
-        (TokenType tokenType, uint32 productId, uint64 expiry,, uint64 settlementWindow) = _tokenId.parseTokenId();
+        (TokenType tokenType, uint32 productId, uint64 expiry,, uint64 exerciseWindow) = _tokenId.parseTokenId();
 
         // check settlement window
-        if (settlementWindow == 0) revert PM_InvalidSettlementWindow();
+        if (exerciseWindow == 0) revert PM_InvalidExerciseWindow();
 
         (, uint8 underlyingId, uint8 strikeId, uint8 collateralId) = productId.parseProductId();
 
@@ -441,12 +447,12 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
         view
         returns (address engine, uint8 debtId, uint256 debtPerOption, uint8 payoutId, uint256 payoutPerOption)
     {
-        (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strikePrice, uint64 settlementWindow) =
+        (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strikePrice, uint64 exerciseWindow) =
             TokenIdUtil.parseTokenId(_tokenId);
 
         if (block.timestamp < expiry) revert PM_NotExpired();
 
-        if (block.timestamp > expiry + settlementWindow) return (address(0), 0, 0, 0, 0);
+        if (block.timestamp > expiry + exerciseWindow) return (address(0), 0, 0, 0, 0);
 
         (uint8 engineId, uint8 underlyingId, uint8 strikeId, uint8 collateralId) = productId.parseProductId();
 

@@ -12,8 +12,6 @@ import "../src/core/OptionToken.sol";
 import "../src/core/OptionTokenDescriptor.sol";
 import "../src/core/Pomace.sol";
 import "../src/core/PomaceProxy.sol";
-import "../src/core/engines/cross-margin/CrossMarginEngine.sol";
-import "../src/core/engines/cross-margin/CrossMarginEngineProxy.sol";
 
 import "../src/core/oracles/ChainlinkOracle.sol";
 import "../src/core/oracles/ChainlinkOracleDisputable.sol";
@@ -28,10 +26,7 @@ contract Deploy is Script, Utilities {
         (, address clOracleDisputable) = deployOracles();
 
         // Deploy core components
-        (Pomace pomace,, address optionToken) = deployCore(clOracleDisputable);
-
-        // deploy and register Cross Margin Engine
-        deployCrossMarginEngine(pomace, optionToken);
+        deployCore(clOracleDisputable);
 
         // Todo: transfer ownership to Pomace multisig and Hashnote accordingly.
         vm.stopBroadcast();
@@ -77,21 +72,6 @@ contract Deploy is Script, Utilities {
         assert(address(optionToken) == optionTokenAddr);
 
         console.log("\n---- Core deployment ended ----\n");
-    }
-
-    function deployCrossMarginEngine(Pomace pomace, address optionToken) public returns (address crossMarginEngine) {
-        // ============ Deploy Cross Margin Engine (Upgradable) ============== //
-        address engineImplementation = address(new CrossMarginEngine(address(pomace), optionToken));
-        bytes memory engineData = abi.encode(CrossMarginEngine.initialize.selector);
-        crossMarginEngine = address(new CrossMarginEngineProxy(engineImplementation, engineData));
-
-        console.log("CrossMargin Engine: \t\t", crossMarginEngine);
-
-        // ============ Register Full Margin Engine ============== //
-        {
-            uint256 engineId = pomace.registerEngine(crossMarginEngine);
-            console.log("   -> Registered ID:", engineId);
-        }
     }
 
     // add a function prefixed with test here so forge coverage will ignore this file

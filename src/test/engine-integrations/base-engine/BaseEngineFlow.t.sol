@@ -202,7 +202,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
     function _getDefaultCallId() internal view returns (uint256 tokenId) {
         uint256 expiry = block.timestamp + 1 days;
         uint256 strikePrice = 4000 * UNIT;
-        uint256 settlementWindow = 300;
-        tokenId = getTokenId(TokenType.CALL, productIdEthCollat, expiry, strikePrice, settlementWindow);
+        uint256 exerciseWindow = 300;
+        tokenId = getTokenId(TokenType.CALL, productIdEthCollat, expiry, strikePrice, exerciseWindow);
     }
 }
