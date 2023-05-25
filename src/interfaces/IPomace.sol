@@ -33,7 +33,7 @@ interface IPomace {
         view
         returns (Balance[] memory debts, Balance[] memory payouts);
 
-    function getProductId(address oracle, address engine, address underlying, address strike, address collateral)
+    function getProductId(address engine, address underlying, address strike, address collateral)
         external
         view
         returns (uint32 id);
