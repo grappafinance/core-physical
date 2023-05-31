@@ -35,8 +35,8 @@ contract Deploy is Script, Utilities {
 
     function deployOracles() public returns (address clOracle, address clOracleDisputable) {
         // ============ Deploy Chainlink Oracles ============== //
-        clOracle = address(new ChainlinkOracle());
-        clOracleDisputable = address(new ChainlinkOracleDisputable());
+        clOracle = address(new ChainlinkOracle(address(this)));
+        clOracleDisputable = address(new ChainlinkOracleDisputable(address(this)));
     }
 
     /// @dev deploy core contracts: Upgradable Pomace, non-upgradable OptionToken with descriptor
