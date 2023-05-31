@@ -24,7 +24,7 @@ contract Deploy is Script, Utilities {
 
         // deploy and register Oracles
         // (, address clOracleDisputable) = deployOracles();
-        address clOracleDisputable = vm.envAddress("OracleDisputable");
+        address clOracleDisputable = vm.envAddress("OracleOwner");
 
         // Deploy core components
         deployCore(clOracleDisputable);
