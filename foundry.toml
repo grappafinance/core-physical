@@ -8,7 +8,6 @@ gas_reports = [
   # "*",
   "Pomace",
   "OptionToken",
-  "CrossMarginEngine",
   "ChainlinkOracle",
   "ChainlinkOracleDisputable"
 ]

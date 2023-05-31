@@ -56,7 +56,7 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
 
         address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
 
-        bytes memory data = abi.encode(Pomace.initialize.selector);
+        bytes memory data = abi.encodeWithSelector(Pomace.initialize.selector, address(this));
 
         pomace = Pomace(address(new PomaceProxy(pomaceImplementation, data))); // 6
 

@@ -35,8 +35,8 @@ contract Deploy is Script, Utilities {
 
     function deployOracles() public returns (address clOracle, address clOracleDisputable) {
         // ============ Deploy Chainlink Oracles ============== //
-        clOracle = address(new ChainlinkOracle());
-        clOracleDisputable = address(new ChainlinkOracleDisputable());
+        clOracle = address(new ChainlinkOracle(vm.envAddress("OracleOwner")));
+        clOracleDisputable = address(new ChainlinkOracleDisputable(vm.envAddress("OracleOwner")));
     }
 
     /// @dev deploy core contracts: Upgradable Pomace, non-upgradable OptionToken with descriptor
@@ -52,7 +52,7 @@ contract Deploy is Script, Utilities {
 
         address implementation = address(new Pomace(optionTokenAddr, oracle)); // nonce
         console.log("pomace implementation\t\t", address(implementation));
-        bytes memory data = abi.encode(Pomace.initialize.selector);
+        bytes memory data = abi.encodeWithSelector(Pomace.initialize.selector, vm.envAddress("PomaceOwner"));
         pomace = Pomace(address(new PomaceProxy(implementation, data))); // nonce + 1
 
         console.log("pomace proxy \t\t\t", address(pomace));

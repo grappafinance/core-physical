@@ -26,7 +26,7 @@ contract PomaceProxyTest is Test {
         weth = new MockERC20("WETH", "WETH", 18);
 
         implementation = new Pomace(address(0), address(0));
-        bytes memory data = abi.encode(Pomace.initialize.selector);
+        bytes memory data = abi.encodeWithSelector(Pomace.initialize.selector, address(this));
 
         pomace = Pomace(address(new PomaceProxy(address(implementation), data)));
     }
@@ -37,7 +37,7 @@ contract PomaceProxyTest is Test {
 
     function testImplementationIsInitialized() public {
         vm.expectRevert("Initializable: contract is already initialized");
-        implementation.initialize();
+        implementation.initialize(address(this));
     }
 
     function testProxyOwnerIsSelf() public {
@@ -46,7 +46,7 @@ contract PomaceProxyTest is Test {
 
     function testProxyIsInitialized() public {
         vm.expectRevert("Initializable: contract is already initialized");
-        pomace.initialize();
+        pomace.initialize(address(this));
     }
 
     function testCannotUpgradeFromNonOwner() public {
