@@ -10,7 +10,7 @@ import {IERC1155} from "openzeppelin/token/ERC1155/IERC1155.sol";
 
 // interfaces
 import {IPomace} from "../../interfaces/IPomace.sol";
-import {IOptionToken} from "../../interfaces/IOptionToken.sol";
+import {IPhysicalOptionToken} from "../../interfaces/IPhysicalOptionToken.sol";
 
 // libraries
 import {TokenIdUtil} from "../../libraries/TokenIdUtil.sol";
@@ -31,7 +31,7 @@ abstract contract BaseEngine {
     using TokenIdUtil for uint256;
 
     IPomace public immutable pomace;
-    IOptionToken public immutable optionToken;
+    IPhysicalOptionToken public immutable optionToken;
 
     ///@dev maskedAccount => operator => allowedExecutionLeft
     ///     every account can authorize any amount of addresses to modify all sub-accounts he controls.
@@ -45,13 +45,13 @@ abstract contract BaseEngine {
 
     event CollateralRemoved(address subAccount, address collateral, uint256 amount);
 
-    event OptionTokenMinted(address subAccount, uint256 tokenId, uint256 amount);
+    event PhysicalOptionTokenMinted(address subAccount, uint256 tokenId, uint256 amount);
 
-    event OptionTokenBurned(address subAccount, uint256 tokenId, uint256 amount);
+    event PhysicalOptionTokenBurned(address subAccount, uint256 tokenId, uint256 amount);
 
-    event OptionTokenAdded(address subAccount, uint256 tokenId, uint64 amount);
+    event PhysicalOptionTokenAdded(address subAccount, uint256 tokenId, uint64 amount);
 
-    event OptionTokenRemoved(address subAccount, uint256 tokenId, uint64 amount);
+    event PhysicalOptionTokenRemoved(address subAccount, uint256 tokenId, uint64 amount);
 
     event ExercisedToken(address subAccount, uint256 tokenId, uint256 amount);
 
@@ -69,7 +69,7 @@ abstract contract BaseEngine {
 
     constructor(address _pomace, address _optionToken) {
         pomace = IPomace(_pomace);
-        optionToken = IOptionToken(_optionToken);
+        optionToken = IPhysicalOptionToken(_optionToken);
     }
 
     /**
@@ -215,7 +215,7 @@ abstract contract BaseEngine {
         // update the account in state
         _increaseShortInAccount(_subAccount, tokenId, amount);
 
-        emit OptionTokenMinted(_subAccount, tokenId, amount);
+        emit PhysicalOptionTokenMinted(_subAccount, tokenId, amount);
 
         // mint option token
         optionToken.mint(recipient, tokenId, amount);
@@ -236,7 +236,7 @@ abstract contract BaseEngine {
         // update the account in state
         _decreaseShortInAccount(_subAccount, tokenId, amount);
 
-        emit OptionTokenBurned(_subAccount, tokenId, amount);
+        emit PhysicalOptionTokenBurned(_subAccount, tokenId, amount);
 
         optionToken.burn(from, tokenId, amount);
     }
@@ -257,7 +257,7 @@ abstract contract BaseEngine {
         // update the state
         _increaseLongInAccount(_subAccount, tokenId, amount);
 
-        emit OptionTokenAdded(_subAccount, tokenId, amount);
+        emit PhysicalOptionTokenAdded(_subAccount, tokenId, amount);
 
         // transfer the option token in
         IERC1155(address(optionToken)).safeTransferFrom(from, address(this), tokenId, amount, "");
@@ -274,7 +274,7 @@ abstract contract BaseEngine {
         // update the state
         _decreaseLongInAccount(_subAccount, tokenId, amount);
 
-        emit OptionTokenRemoved(_subAccount, tokenId, amount);
+        emit PhysicalOptionTokenRemoved(_subAccount, tokenId, amount);
 
         // transfer the option token out
         IERC1155(address(optionToken)).safeTransferFrom(address(this), to, tokenId, amount, "");

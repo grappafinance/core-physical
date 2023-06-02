@@ -8,8 +8,8 @@ import "openzeppelin/utils/Strings.sol";
 
 import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "../src/core/OptionToken.sol";
-import "../src/core/OptionTokenDescriptor.sol";
+import "../src/core/PhysicalOptionToken.sol";
+import "../src/core/PhysicalOptionTokenDescriptor.sol";
 import "../src/core/Pomace.sol";
 import "../src/core/PomaceProxy.sol";
 
@@ -39,7 +39,7 @@ contract Deploy is Script, Utilities {
         clOracleDisputable = address(new ChainlinkOracleDisputable(vm.envAddress("OracleOwner")));
     }
 
-    /// @dev deploy core contracts: Upgradable Pomace, non-upgradable OptionToken with descriptor
+    /// @dev deploy core contracts: Upgradable Pomace, non-upgradable PhysicalOptionToken with descriptor
     function deployCore(address oracle) public returns (Pomace pomace, address optionDescriptor, address optionToken) {
         uint256 nonce = vm.getNonce(msg.sender);
         console.log("nonce", nonce);
@@ -59,14 +59,14 @@ contract Deploy is Script, Utilities {
 
         // =================== Deploy Option Descriptor (Upgradable) =============== //
 
-        address descriptorImpl = address(new OptionTokenDescriptor()); // nonce + 2
-        bytes memory descriptorInitData = abi.encode(OptionTokenDescriptor.initialize.selector);
+        address descriptorImpl = address(new PhysicalOptionTokenDescriptor()); // nonce + 2
+        bytes memory descriptorInitData = abi.encode(PhysicalOptionTokenDescriptor.initialize.selector);
         optionDescriptor = address(new ERC1967Proxy(descriptorImpl, descriptorInitData)); // nonce + 3
         console.log("optionToken descriptor\t", optionDescriptor);
 
-        // =============== Deploy OptionToken ================= //
+        // =============== Deploy PhysicalOptionToken ================= //
 
-        optionToken = address(new OptionToken(address(pomace), optionDescriptor)); // nonce + 4
+        optionToken = address(new PhysicalOptionToken(address(pomace), optionDescriptor)); // nonce + 4
         console.log("optionToken\t\t\t", optionToken);
 
         // revert if deployed contract is different than what we set in Pomace

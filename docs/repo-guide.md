@@ -13,8 +13,8 @@ src
 │   └── types.sol
 ├── core
 │   ├── Grappa.sol
-│   ├── OptionToken.sol
-│   ├── OptionTokenDescriptor.sol
+│   ├── PhysicalOptionToken.sol
+│   ├── PhysicalOptionTokenDescriptor.sol
 │   ├── engines
 │   │   ├── BaseEngine.sol
 │   │   ├── cross-margin
@@ -29,7 +29,7 @@ src
 
 ### Types and Errors
 
-All shared types, constant, enums and errors are defined in `config`. 
+All shared types, constant, enums and errors are defined in `config`.
 
 Each margin engine, has their own data type to store account data and manage margin rules. These types are defined in each engine's `types.sol` file.
 
@@ -43,9 +43,9 @@ All engines are located in `src/core/engines`. They are the most important part 
 
 Currently, because there are lots of similarities between the 3 engines we implemented, we have a abstract contract called `BaseEngine` that everyone inherits from.
 
-Engines are the entry point for option sellers (to create the option token out of the system). We're using a `execute` function for users to pass in array of operations they want to do for a given `subAccount`*. For example
+Engines are the entry point for option sellers (to create the option token out of the system). We're using a `execute` function for users to pass in array of operations they want to do for a given `subAccount`\*. For example
 
-note: `subAccount`*: In the current shared engine design (inherited from `BaseEngine`), we use a `subAccount` address to map ID to a specific account data structure designed by each engine. A `subAccount` is "controllable" by an address if only the last 1 bytes are different from the address. This mean each address can control 256 subAccounts. This design is inspired by [Euler](https://github.com/euler-xyz/euler-contracts/blob/cd3036e0087280365819f99ad531141894d0b7ee/contracts/BaseLogic.sol#L24), it enables cheaper auth process without defining a `owner` for each ID.
+note: `subAccount`\*: In the current shared engine design (inherited from `BaseEngine`), we use a `subAccount` address to map ID to a specific account data structure designed by each engine. A `subAccount` is "controllable" by an address if only the last 1 bytes are different from the address. This mean each address can control 256 subAccounts. This design is inspired by [Euler](https://github.com/euler-xyz/euler-contracts/blob/cd3036e0087280365819f99ad531141894d0b7ee/contracts/BaseLogic.sol#L24), it enables cheaper auth process without defining a `owner` for each ID.
 
 (You don't have to follow this access control design to be compatible with Grappa)
 
@@ -53,6 +53,6 @@ note: `subAccount`*: In the current shared engine design (inherited from `BaseEn
 
 ### Integration tests
 
-You can find the integration tests for each engine in `test/engine-integrations/`. In these tests, we setup the engine with the real Grappa contract and OptionToken contract to test the margining rules.
+You can find the integration tests for each engine in `test/engine-integrations/`. In these tests, we setup the engine with the real Grappa contract and PhysicalOptionToken contract to test the margining rules.
 
 Mosts of the tests for engines are in this form, as it give us better gas estimation, and make it easier to test shared logic like payout in settlement.

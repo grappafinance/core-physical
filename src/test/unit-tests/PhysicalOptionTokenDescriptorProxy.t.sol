@@ -6,10 +6,10 @@ import "forge-std/Test.sol";
 
 import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {OptionTokenDescriptor} from "../../core/OptionTokenDescriptor.sol";
+import {PhysicalOptionTokenDescriptor} from "../../core/PhysicalOptionTokenDescriptor.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 
-import {MockTokenDescriptorV2} from "../mocks/MockOptionTokenDescriptorV2.sol";
+import {MockTokenDescriptorV2} from "../mocks/MockPhysicalOptionTokenDescriptorV2.sol";
 
 import "../../config/errors.sol";
 import "../../config/enums.sol";
@@ -19,14 +19,14 @@ import "../../config/constants.sol";
  * @dev test on implementation contract
  */
 contract OptionProxyTest is Test {
-    OptionTokenDescriptor public implementation;
-    OptionTokenDescriptor public descriptor;
+    PhysicalOptionTokenDescriptor public implementation;
+    PhysicalOptionTokenDescriptor public descriptor;
 
     constructor() {
-        implementation = new OptionTokenDescriptor();
-        bytes memory data = abi.encode(OptionTokenDescriptor.initialize.selector);
+        implementation = new PhysicalOptionTokenDescriptor();
+        bytes memory data = abi.encode(PhysicalOptionTokenDescriptor.initialize.selector);
 
-        descriptor = OptionTokenDescriptor(address(new ERC1967Proxy(address(implementation), data)));
+        descriptor = PhysicalOptionTokenDescriptor(address(new ERC1967Proxy(address(implementation), data)));
     }
 
     function testImplementationContractOwnerIsZero() public {

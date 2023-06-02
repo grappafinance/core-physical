@@ -6,7 +6,7 @@ This is the basic diagram of how all contracts interact with each other.
 
 ![high level](./imgs/system-diagram.png)
 
-There are 2 main contracts: `Grappa`, `OptionToken`, and 2 sets of contracts: oracles, and margin engines. 
+There are 2 main contracts: `Grappa`, `PhysicalOptionToken`, and 2 sets of contracts: oracles, and margin engines.
 
 ## `Grappa.sol`
 
@@ -16,9 +16,9 @@ Grappa is upgradeable right now, given that we might want to expand the definiti
 
 Grappa is also in charge of settling the options after expiry. Once a optionToken is created by the engine, `Grappa` serve as the fair clearing house to determine the settlement price. Each engines has to comply with the interface to pay out to users accordingly.
 
-## `OptionToken.sol`
+## `PhysicalOptionToken.sol`
 
-`OptionToken`: ERC1155 token that represent the right to claim for a non-negative payout at expiry. It can represent a long call position, a long put position, or debit spreads. How the Id of an option token is interpreted is determined by the Grappa contract at settlement.
+`PhysicalOptionToken`: ERC1155 token that represent the right to claim for a non-negative payout at expiry. It can represent a long call position, a long put position, or debit spreads. How the Id of an option token is interpreted is determined by the Grappa contract at settlement.
 
 ## Oracles
 
@@ -31,12 +31,14 @@ Grappa Owner can register bunch of oracles to the system. Oracles are contracts 
 ### List of Margin Engines
 
 - `FullMargin`: Simple implementation of fully collateralized margin. Only accept 1 collateral + 1 short per account. Can be used to mint the following shorts:
+
   - covered call (collateralized with underlying)
   - put (collateralized with strike)
   - call spread (collateralized with strike or underlying)
   - put spread (collateralized with strike)
 
 - `CrossMargin`: use a single subAccount to hold multiple collateral, long and short positions.
+
   - Upgradable and maintained by Hashnote team
   - Can use single account to collateralize arbitrary amount of short positions, and offset requirements with long positions.
   - Currently fully collateralize all positions. Can be expanded to partial collateral in the future

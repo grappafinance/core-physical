@@ -9,7 +9,7 @@ import "../../mocks/MockEngine.sol";
 
 import "../../../core/Pomace.sol";
 import "../../../core/PomaceProxy.sol";
-import "../../../core/OptionToken.sol";
+import "../../../core/PhysicalOptionToken.sol";
 
 import "../../../config/enums.sol";
 import "../../../config/types.sol";
@@ -22,7 +22,7 @@ import {ActionHelper} from "../../shared/ActionHelper.sol";
 abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
     MockEngine internal engine;
     Pomace internal pomace;
-    OptionToken internal option;
+    PhysicalOptionToken internal option;
 
     MockERC20 internal usdc;
     MockERC20 internal weth;
@@ -52,7 +52,7 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
         // predict address of margin account and use it here
         address pomaceAddr = predictAddress(address(this), 6);
 
-        option = new OptionToken(pomaceAddr, address(0)); // nonce: 4
+        option = new PhysicalOptionToken(pomaceAddr, address(0)); // nonce: 4
 
         address pomaceImplementation = address(new Pomace(address(option), address(oracle))); // nonce: 5
 

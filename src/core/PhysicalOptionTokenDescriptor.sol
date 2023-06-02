@@ -6,15 +6,15 @@ import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-upgradeable/access/OwnableUpgradeable.sol";
 import "openzeppelin/utils/Strings.sol";
 // interfaces
-import {IOptionTokenDescriptor} from "../interfaces/IOptionTokenDescriptor.sol";
+import {IPhysicalOptionTokenDescriptor} from "../interfaces/IPhysicalOptionTokenDescriptor.sol";
 
 /**
- * @title   OptionTokenDescriptor
+ * @title   PhysicalOptionTokenDescriptor
  * @author  @antoncoding, @dsshap
- * @dev     While OptionToken is fully permission-less, OptionTokenDescriptor is upgradable and can
+ * @dev     While PhysicalOptionToken is fully permission-less, PhysicalOptionTokenDescriptor is upgradable and can
  *          be upgraded to a better version to reflect Option position for users.
  */
-contract OptionTokenDescriptor is OwnableUpgradeable, UUPSUpgradeable, IOptionTokenDescriptor {
+contract PhysicalOptionTokenDescriptor is OwnableUpgradeable, UUPSUpgradeable, IPhysicalOptionTokenDescriptor {
     // solhint-disable-next-line no-empty-blocks
     constructor() initializer {}
 
