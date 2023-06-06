@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // import test base and helpers.
-import {MockedBaseEngineSetup} from "../engine-integrations/base-engine/MockedBaseEngineSetup.sol";
+import {MockedBaseEngineSetup} from "./base-engine/MockedBaseEngineSetup.sol";
 
 import "../../config/types.sol";
 import "../../config/errors.sol";
