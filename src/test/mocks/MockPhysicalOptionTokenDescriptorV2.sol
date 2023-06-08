@@ -7,7 +7,7 @@ import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin/utils/Strings.sol";
 
 /**
- * @title   MockOptionTokenDesciptor
+ * @title   MockPhysicalOptionTokenDesciptor
  * @notice  Mock contract to test upgradability for token desciptor
  */
 contract MockTokenDescriptorV2 is UUPSUpgradeable {

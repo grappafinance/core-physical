@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IOptionToken {
+interface IPhysicalOptionToken {
     /**
      * @dev mint option token to an address. Can only be called by corresponding margin engine
      * @param _recipient    where to mint token to

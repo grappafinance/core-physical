@@ -4,15 +4,15 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import "forge-std/Test.sol";
 
-import {OptionToken} from "../../core/OptionToken.sol";
+import {PhysicalOptionToken} from "../../core/PhysicalOptionToken.sol";
 import {Pomace} from "../../core/Pomace.sol";
-import {OptionTokenDescriptor} from "../../core/OptionTokenDescriptor.sol";
+import {PhysicalOptionTokenDescriptor} from "../../core/PhysicalOptionTokenDescriptor.sol";
 import "../../libraries/TokenIdUtil.sol";
 import "../../libraries/ProductIdUtil.sol";
 import "../../config/errors.sol";
 
-contract OptionTokenTest is Test {
-    OptionToken public option;
+contract PhysicalOptionTokenTest is Test {
+    PhysicalOptionToken public option;
 
     address public pomace;
     address public nftDescriptor;
@@ -20,9 +20,9 @@ contract OptionTokenTest is Test {
     function setUp() public {
         pomace = address(new Pomace(address(0), address(0)));
 
-        nftDescriptor = address(new OptionTokenDescriptor());
+        nftDescriptor = address(new PhysicalOptionTokenDescriptor());
 
-        option = new OptionToken(pomace, nftDescriptor);
+        option = new PhysicalOptionToken(pomace, nftDescriptor);
     }
 
     function testCannotMint() public {

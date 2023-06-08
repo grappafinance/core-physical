@@ -11,7 +11,7 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-upgradeable/security/Reen
 
 // interfaces
 import {IERC20Metadata} from "openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
-import {IOptionToken} from "../interfaces/IOptionToken.sol";
+import {IPhysicalOptionToken} from "../interfaces/IPhysicalOptionToken.sol";
 import {IOracle} from "../interfaces/IOracle.sol";
 import {IMarginEngine} from "../interfaces/IMarginEngine.sol";
 
@@ -41,7 +41,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     using TokenIdUtil for uint256;
 
     /// @dev optionToken address
-    IOptionToken public immutable optionToken;
+    IPhysicalOptionToken public immutable optionToken;
 
     /// @dev oracle address
     IOracle public immutable oracle;
@@ -88,7 +88,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     /// @dev set immutables in constructor
     /// @dev also set the implementation contract to initialized = true
     constructor(address _optionToken, address _oracle) initializer {
-        optionToken = IOptionToken(_optionToken);
+        optionToken = IPhysicalOptionToken(_optionToken);
         oracle = IOracle(_oracle);
     }
 

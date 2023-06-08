@@ -6,7 +6,7 @@ This is the basic diagram of how all contracts interact with each other.
 
 ![high level](./imgs/system-diagram.png)
 
-There are 2 main contracts: `Grappa`, `OptionToken`, and 2 sets of contracts: oracles, and margin engines. 
+There are 2 main contracts: `Grappa`, `OptionToken`, and 2 sets of contracts: oracles, and margin engines.
 
 ## `Grappa.sol`
 
@@ -31,12 +31,14 @@ Grappa Owner can register bunch of oracles to the system. Oracles are contracts 
 ### List of Margin Engines
 
 - `FullMargin`: Simple implementation of fully collateralized margin. Only accept 1 collateral + 1 short per account. Can be used to mint the following shorts:
+
   - covered call (collateralized with underlying)
   - put (collateralized with strike)
   - call spread (collateralized with strike or underlying)
   - put spread (collateralized with strike)
 
 - `CrossMargin`: use a single subAccount to hold multiple collateral, long and short positions.
+
   - Upgradable and maintained by Hashnote team
   - Can use single account to collateralize arbitrary amount of short positions, and offset requirements with long positions.
   - Currently fully collateralize all positions. Can be expanded to partial collateral in the future

@@ -5,9 +5,9 @@ pragma solidity ^0.8.0;
 import {ERC1155} from "solmate/tokens/ERC1155.sol";
 
 // interfaces
-import {IOptionToken} from "../interfaces/IOptionToken.sol";
+import {IPhysicalOptionToken} from "../interfaces/IPhysicalOptionToken.sol";
 import {IPomace} from "../interfaces/IPomace.sol";
-import {IOptionTokenDescriptor} from "../interfaces/IOptionTokenDescriptor.sol";
+import {IPhysicalOptionTokenDescriptor} from "../interfaces/IPhysicalOptionTokenDescriptor.sol";
 
 // constants and types
 import "../config/enums.sol";
@@ -15,22 +15,22 @@ import "../config/constants.sol";
 import "../config/errors.sol";
 
 /**
- * @title   OptionToken
+ * @title   PhysicalOptionToken
  * @author  antoncoding
- * @dev     each OptionToken represent the right to redeem cash value at expiry.
+ * @dev     each PhysicalOptionToken represent the right to redeem cash value at expiry.
  *             The value of each OptionType should always be positive.
  */
-contract OptionToken is ERC1155, IOptionToken {
+contract PhysicalOptionToken is ERC1155, IPhysicalOptionToken {
     ///@dev pomace serve as the registry
     IPomace public immutable pomace;
-    IOptionTokenDescriptor public immutable descriptor;
+    IPhysicalOptionTokenDescriptor public immutable descriptor;
 
     constructor(address _pomace, address _descriptor) {
         // solhint-disable-next-line reason-string
         if (_pomace == address(0)) revert();
         pomace = IPomace(_pomace);
 
-        descriptor = IOptionTokenDescriptor(_descriptor);
+        descriptor = IPhysicalOptionTokenDescriptor(_descriptor);
     }
 
     /**
