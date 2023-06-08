@@ -8,5 +8,13 @@
     "ChainlinkOracle": "",
     "ChainlinkOracleDisputable": ""
   },
-  "mainnet": {}
+  "mainnet": {
+    "Pomace": "0xCFc60d34949A7DBdf91ba6D5613b26d6Ff0AD504",
+    "PomaceProxy": "0x8Cadc832040bc66a0Aeef9bF6b6D1bD7bcC5ACDb",
+    "OptionTokenDescriptor": "0x6B7d54003f73bE979cf92BF369432aC534853692",
+    "OptionTokenDescriptorProxy": "0xa642b3A40278e835cf89A23554e7810F31Ca5522",
+    "OptionToken": "0x10022BE24d6fbbF7Ce321361E3371f0A05754Ed0",
+    "ChainlinkOracle": "",
+    "ChainlinkOracleDisputable": ""
+  }
 }
