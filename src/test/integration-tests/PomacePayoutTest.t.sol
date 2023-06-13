@@ -71,11 +71,11 @@ contract PomacePayoutTest is EngineIntegrationFixture {
 
         assertEq(debts[0].collateralId, usdcId);
         assertEq(debts[0].amount, 1600 * 1e6);
+        assertEq(debts[1].collateralId, wethId);
+        assertEq(debts[1].amount, 1 * 1e18);
 
         assertEq(payouts[0].collateralId, wethId);
         assertEq(payouts[0].amount, 1 * 1e18);
-
-        assertEq(debts[1].collateralId, wethId);
         assertEq(payouts[1].collateralId, usdcId);
         assertEq(payouts[1].amount, 1900 * 1e6);
     }
