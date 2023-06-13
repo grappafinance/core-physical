@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import "../../mocks/MockERC20.sol";
 import "../../mocks/MockOracle.sol";
-import "../../mocks/MockEngine.sol";
+import "../../mocks/MockBaseEngine.sol";
 
 import "../../../core/Pomace.sol";
 import "../../../core/PomaceProxy.sol";
@@ -20,7 +20,7 @@ import {ActionHelper} from "../../shared/ActionHelper.sol";
 
 // solhint-disable max-states-count
 abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
-    MockEngine internal engine;
+    MockBaseEngine internal engine;
     Pomace internal pomace;
     PhysicalOptionToken internal option;
 
@@ -44,7 +44,6 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
 
     constructor() {
         usdc = new MockERC20("USDC", "USDC", 6); // nonce: 1
-
         weth = new MockERC20("WETH", "WETH", 18); // nonce: 2
 
         oracle = new MockOracle(); // nonce: 3
@@ -60,7 +59,7 @@ abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
 
         pomace = Pomace(address(new PomaceProxy(pomaceImplementation, data))); // 6
 
-        engine = new MockEngine(address(pomace), address(option)); // nonce 7
+        engine = new MockBaseEngine(address(pomace), address(option)); // nonce 7
 
         // register products
         usdcId = pomace.registerAsset(address(usdc));

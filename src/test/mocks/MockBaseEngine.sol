@@ -14,10 +14,10 @@ import "../../config/types.sol";
 import "../../config/errors.sol";
 
 /**
- * @title   MockEngine
+ * @title   MockBaseEngine
  * @notice  Implement execute to test all flow in BaseEngine
  */
-contract MockEngine is BaseEngine, ReentrancyGuard {
+contract MockBaseEngine is BaseEngine, ReentrancyGuard {
     bool public isAboveWater;
 
     int80 public mockPayout;
