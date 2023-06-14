@@ -111,36 +111,78 @@ contract PomaceSettlementTest is EngineIntegrationFixture {
         assertEq(weth.balanceOf(address(engine)), engineWethBefore);
     }
 
-    function testSettleWithNonUnderlyingNorStrike() public {
+    function testSettlePutWithNonUnderlyingNorStrike() public {
         weth.mint(address(this), 1 * 1e18);
         weth.approve(address(engine), 1 * 1e18);
 
-        // eth put collateralized in btc
-        MockERC20 wbtc = new MockERC20("WBTC", "WBTC", 8);
-        wbtc.mint(address(engine), 100 * 1e8);
+        // eth put collateralized in SDYC
+        MockERC20 sdyc = new MockERC20("SDYC", "SDYC", 6);
 
-        uint8 wbtcId = pomace.registerAsset(address(wbtc));
+        vm.label(address(sdyc), "SDYC");
+        sdyc.mint(address(engine), 10_000 * 1e6);
 
-        pomace.setCollateralizable(address(usdc), address(wbtc), true);
+        uint8 sdycId = pomace.registerAsset(address(sdyc));
 
-        uint32 productId = ProductIdUtil.getProductId(engineId, wethId, usdcId, wbtcId);
+        pomace.setCollateralizable(address(usdc), address(sdyc), true);
+
+        // create a product with collateral not same as strike
+        uint32 productId = ProductIdUtil.getProductId(engineId, wethId, usdcId, sdycId);
         uint256 tokenId = _mintPutOption(2000 * 1e6, productId, 1 * UNIT);
 
         vm.warp(expiry);
         oracle.setExpiryPrice(address(weth), address(usdc), 1600 * 1e6);
-        oracle.setExpiryPrice(address(wbtc), address(usdc), 16000 * 1e6);
+        oracle.setExpiryPrice(address(sdyc), address(usdc), 1.25 * 1e6);
 
         pomace.settleOption(address(this), tokenId, 1 * UNIT);
 
-        assertEq(wbtc.balanceOf(address(this)), 0.125 * 1e8);
+        uint256 expectedSdycPayout = 1600 * 1e6;
+        uint256 expectedEngineSdycBalance = 10_000 * 1e6 - expectedSdycPayout;
+
+        assertEq(sdyc.balanceOf(address(this)), expectedSdycPayout);
+        assertEq(sdyc.balanceOf(address(engine)), expectedEngineSdycBalance);
+
         assertEq(weth.balanceOf(address(this)), 0);
-        assertEq(usdc.balanceOf(address(this)), selfUsdcBefore);
-
-        uint256 expectedEngineWbtcBalance = 100 * 1e8 - 0.125 * 1e8;
-
-        assertEq(wbtc.balanceOf(address(engine)), expectedEngineWbtcBalance);
         assertEq(weth.balanceOf(address(engine)), engineWethBefore + 1 * 1e18);
+
+        assertEq(usdc.balanceOf(address(this)), selfUsdcBefore);
         assertEq(usdc.balanceOf(address(engine)), engineUsdcBefore);
+    }
+
+    function testSettleCallWithNonUnderlyingNorStrike() public {
+        weth.mint(address(this), 1 * 1e18);
+        weth.approve(address(engine), 1 * 1e18);
+
+        // eth call collateralized in LsETH
+        MockERC20 lsEth = new MockERC20("LsETH", "LsETH", 18);
+
+        vm.label(address(lsEth), "LSETH");
+        lsEth.mint(address(engine), 1000 * 1e18);
+
+        uint8 lsEthId = pomace.registerAsset(address(lsEth));
+
+        pomace.setCollateralizable(address(weth), address(lsEth), true);
+
+        // create a product with collateral not same as underlying
+        uint32 productId = ProductIdUtil.getProductId(engineId, wethId, usdcId, lsEthId);
+        uint256 tokenId = _mintCallOption(2000 * 1e6, productId, 1 * UNIT);
+
+        vm.warp(expiry);
+        oracle.setExpiryPrice(address(lsEth), address(weth), 1900 * 1e6);
+
+        pomace.settleOption(address(this), tokenId, 1 * UNIT);
+
+        // 1 UNIT * 1 UNIT / 1900 * 1e6
+        uint256 expectedLsEthPayout = 0.000526 * 1e18;
+        uint256 expectedEngineLsEthBalance = 1000 * 1e18 - expectedLsEthPayout;
+
+        assertEq(lsEth.balanceOf(address(this)), expectedLsEthPayout);
+        assertEq(lsEth.balanceOf(address(engine)), expectedEngineLsEthBalance);
+
+        assertEq(weth.balanceOf(address(this)), 1 * 1e18);
+        assertEq(weth.balanceOf(address(engine)), engineWethBefore);
+
+        assertEq(usdc.balanceOf(address(this)), selfUsdcBefore - 2000 * 1e6);
+        assertEq(usdc.balanceOf(address(engine)), engineUsdcBefore + 2000 * 1e6);
     }
 
     function testCannotPassInInconsistentArray() public {
