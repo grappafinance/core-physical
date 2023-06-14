@@ -130,7 +130,6 @@ contract PomaceSettlementTest is EngineIntegrationFixture {
         uint256 tokenId = _mintPutOption(2000 * 1e6, productId, 1 * UNIT);
 
         vm.warp(expiry);
-        oracle.setExpiryPrice(address(weth), address(usdc), 1600 * 1e6);
         oracle.setExpiryPrice(address(sdyc), address(usdc), 1.25 * 1e6);
 
         pomace.settleOption(address(this), tokenId, 1 * UNIT);
