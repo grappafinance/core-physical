@@ -16,7 +16,7 @@ import "../src/core/PomaceProxy.sol";
 import "../src/core/oracles/ChainlinkOracle.sol";
 import "../src/core/oracles/ChainlinkOracleDisputable.sol";
 
-import "../src/test/utils/Utilities.sol";
+import "../test/utils/Utilities.sol";
 
 contract Deploy is Script, Utilities {
     function run() external {
