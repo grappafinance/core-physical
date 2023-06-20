@@ -6,14 +6,14 @@ import "forge-std/Test.sol";
 
 import {ERC1967Proxy} from "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {PhysicalOptionTokenDescriptor} from "../../core/PhysicalOptionTokenDescriptor.sol";
+import {PhysicalOptionTokenDescriptor} from "../../src/core/PhysicalOptionTokenDescriptor.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 
 import {MockTokenDescriptorV2} from "../mocks/MockPhysicalOptionTokenDescriptorV2.sol";
 
-import "../../config/errors.sol";
-import "../../config/enums.sol";
-import "../../config/constants.sol";
+import "../../src/config/errors.sol";
+import "../../src/config/enums.sol";
+import "../../src/config/constants.sol";
 
 /**
  * @dev test on implementation contract
@@ -65,5 +65,15 @@ contract OptionProxyTest is Test {
 
         assertEq(descriptor.tokenURI(0), "https://grappa.finance/token/v2/0");
         assertEq(descriptor.tokenURI(200), "https://grappa.finance/token/v2/200");
+    }
+
+    function testProxyCanInitLater() public {
+        // don't set init call as data
+        PhysicalOptionTokenDescriptor testDescriptor =
+            PhysicalOptionTokenDescriptor(address(new ERC1967Proxy(address(implementation), "")));
+        assertEq(testDescriptor.owner(), address(0));
+
+        testDescriptor.initialize();
+        assertEq(testDescriptor.owner(), address(this));
     }
 }

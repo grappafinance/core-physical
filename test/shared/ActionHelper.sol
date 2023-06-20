@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../config/enums.sol";
-import "../../config/types.sol";
+import "../../src/config/enums.sol";
+import "../../src/config/types.sol";
 
-import "../../libraries/TokenIdUtil.sol";
-import "../../libraries/PhysicalActionUtil.sol";
+import "../../src/libraries/TokenIdUtil.sol";
+import "../../src/libraries/PhysicalActionUtil.sol";
 
 abstract contract ActionHelper {
     function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 strike, uint256 exerciseWindow)

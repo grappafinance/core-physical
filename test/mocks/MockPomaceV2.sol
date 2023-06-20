@@ -5,9 +5,9 @@ pragma solidity ^0.8.0;
 
 import {UUPSUpgradeable} from "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 
-import "../../config/enums.sol";
-import "../../config/types.sol";
-import "../../config/errors.sol";
+import "../../src/config/enums.sol";
+import "../../src/config/types.sol";
+import "../../src/config/errors.sol";
 
 /**
  * @title   MockPomaceV2

@@ -4,13 +4,13 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import "forge-std/Test.sol";
 
-import {Pomace} from "../../core/Pomace.sol";
-import {PomaceProxy} from "../../core/PomaceProxy.sol";
+import {Pomace} from "../../src/core/Pomace.sol";
+import {PomaceProxy} from "../../src/core/PomaceProxy.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 
-import "../../config/errors.sol";
-import "../../config/enums.sol";
-import "../../config/constants.sol";
+import "../../src/config/errors.sol";
+import "../../src/config/enums.sol";
+import "../../src/config/constants.sol";
 
 /**
  * @dev test pomace register related functions

@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 // import test base and helpers.
 import "forge-std/Test.sol";
 
-import {PhysicalOptionToken} from "../../core/PhysicalOptionToken.sol";
-import {Pomace} from "../../core/Pomace.sol";
-import {PhysicalOptionTokenDescriptor} from "../../core/PhysicalOptionTokenDescriptor.sol";
-import "../../libraries/TokenIdUtil.sol";
-import "../../libraries/ProductIdUtil.sol";
-import "../../config/errors.sol";
+import {PhysicalOptionToken} from "../../src/core/PhysicalOptionToken.sol";
+import {Pomace} from "../../src/core/Pomace.sol";
+import {PhysicalOptionTokenDescriptor} from "../../src/core/PhysicalOptionTokenDescriptor.sol";
+
+import "../../src/libraries/TokenIdUtil.sol";
+import "../../src/libraries/ProductIdUtil.sol";
+import "../../src/config/errors.sol";
 
 contract PhysicalOptionTokenTest is Test {
     PhysicalOptionToken public option;

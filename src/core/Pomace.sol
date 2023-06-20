@@ -32,6 +32,7 @@ import "../config/errors.sol";
  * @author  @dsshap, @antoncoding
  * @dev     This contract serves as the registry of the system who system.
  */
+
 contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
     using BalanceUtil for Balance[];
     using FixedPointMathLib for uint256;
@@ -236,28 +237,13 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @param _amount   amount to settle
      */
     function settleOption(address _account, uint256 _tokenId, uint256 _amount)
-        public
+        external
         nonReentrant
         returns (Balance memory, Balance memory)
     {
-        (address engine_, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout) =
-            getDebtAndPayout(_tokenId, _amount.toUint64());
-
-        emit OptionSettled(_account, _tokenId, _amount, debt, payout);
-
         optionToken.burnPomaceOnly(_account, _tokenId, _amount);
 
-        if (debt > 0) {
-            IMarginEngine engine = IMarginEngine(engine_);
-
-            engine.handleExercise(_tokenId, debt, payout);
-            // pull debt asset from msg.sender to engine
-            engine.receiveDebtValue(assets[debtId].addr, msg.sender, debt);
-            // make the engine pay out payout amount
-            engine.sendPayoutValue(assets[payoutId].addr, _account, payout);
-        }
-
-        return (Balance(debtId, debt.toUint80()), Balance(payoutId, payout.toUint80()));
+        return _settleOption(_account, _tokenId, _amount);
     }
 
     /**
@@ -275,7 +261,7 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
         optionToken.batchBurnPomaceOnly(_account, _tokenIds, _amounts);
 
         for (uint256 i; i < _tokenIds.length;) {
-            settleOption(_account, _tokenIds[i], _amounts[i]);
+            _settleOption(_account, _tokenIds[i], _amounts[i]);
 
             unchecked {
                 ++i;
@@ -410,6 +396,28 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
     /* =====================================
      *          Internal Functions
      * ====================================**/
+
+    function _settleOption(address _account, uint256 _tokenId, uint256 _amount)
+        internal
+        returns (Balance memory, Balance memory)
+    {
+        (address engine_, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout) =
+            getDebtAndPayout(_tokenId, _amount.toUint64());
+
+        emit OptionSettled(_account, _tokenId, _amount, debt, payout);
+
+        if (debt > 0) {
+            IMarginEngine engine = IMarginEngine(engine_);
+
+            engine.handleExercise(_tokenId, debt, payout);
+            // pull debt asset from msg.sender to engine
+            engine.receiveDebtValue(assets[debtId].addr, msg.sender, debt);
+            // make the engine pay out payout amount
+            engine.sendPayoutValue(assets[payoutId].addr, _account, payout);
+        }
+
+        return (Balance(debtId, debt.toUint80()), Balance(payoutId, payout.toUint80()));
+    }
 
     /**
      * @dev make sure that the tokenId make sense
