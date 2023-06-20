@@ -88,9 +88,6 @@ abstract contract EngineIntegrationFixture is Test, Utilities {
         // give mock engine lots of eth and usdc so it can pay out
         weth.mint(address(engine), 1_000_000 * 1e18);
         usdc.mint(address(engine), 1_000_000 * 1e6);
-
-        oracle.setSpotPrice(address(usdc), 1 * 1e6);
-        oracle.setSpotPrice(address(weth), 2000 * 1e6);
     }
 
     function _mintCallOption(uint64 strike, uint32 productId, uint256 amount) internal returns (uint256) {

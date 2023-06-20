@@ -12,9 +12,9 @@ import "../../src/config/errors.sol";
 import "../../src/config/constants.sol";
 
 /**
- * @dev test getPayout function on different token types
+ * @notice util contract to setup testing environment and save `before` balances to be checked against in settlement tests
  */
-contract PomaceSettlementTest is EngineIntegrationFixture {
+contract PomaceSettlementTestBase is EngineIntegrationFixture {
     uint256 internal engineUsdcBefore;
     uint256 internal engineWethBefore;
     uint256 internal selfUsdcBefore;
@@ -32,7 +32,12 @@ contract PomaceSettlementTest is EngineIntegrationFixture {
         engineWethBefore = weth.balanceOf(address(engine));
         selfWethBefore = weth.balanceOf(address(this));
     }
+}
 
+/**
+ * @dev test getPayout function on different token types
+ */
+contract PomaceSettlementTest is PomaceSettlementTestBase {
     function testSettleETHCollatCall() public {
         uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
 
@@ -111,9 +116,39 @@ contract PomaceSettlementTest is EngineIntegrationFixture {
         assertEq(weth.balanceOf(address(engine)), engineWethBefore);
     }
 
+    function testCannotPassInInconsistentArray() public {
+        uint256[] memory ids = new uint256[](3);
+        uint256[] memory amounts = new uint256[](2);
+
+        vm.expectRevert(PM_WrongArgumentLength.selector);
+        pomace.batchSettleOptions(address(this), ids, amounts);
+    }
+
+    function testCannotMintExpiredOption() public {
+        uint256 tokenId =
+            TokenIdUtil.getTokenId(TokenType.CALL, usdcCollatProductId, uint64(block.timestamp - 1), uint64(1 * UNIT), 30 minutes);
+
+        vm.expectRevert(PM_InvalidExpiry.selector);
+        engine.mintOptionToken(address(this), tokenId, 1 * UNIT);
+    }
+
+    function testCannotMintOptionZeroExerciseWindow() public {
+        uint256 tokenId =
+            TokenIdUtil.getTokenId(TokenType.CALL, usdcCollatProductId, uint64(block.timestamp - 1), uint64(1 * UNIT), 0);
+
+        vm.expectRevert(PM_InvalidExerciseWindow.selector);
+        engine.mintOptionToken(address(this), tokenId, 1 * UNIT);
+    }
+}
+
+contract PomaceSettlementPriceDeductionTest is PomaceSettlementTestBase {
     function testSettlePutWithNonUnderlyingNorStrike() public {
         weth.mint(address(this), 1 * 1e18);
         weth.approve(address(engine), 1 * 1e18);
+
+        uint256 engineWethBefore = weth.balanceOf(address(engine));
+        uint256 engineUsdcBefore = usdc.balanceOf(address(engine));
+        uint256 selfUsdcBefore = usdc.balanceOf(address(this));
 
         // eth put collateralized in SDYC
         MockERC20 sdyc = new MockERC20("SDYC", "SDYC", 6);
@@ -151,6 +186,10 @@ contract PomaceSettlementTest is EngineIntegrationFixture {
         weth.mint(address(this), 1 * 1e18);
         weth.approve(address(engine), 1 * 1e18);
 
+        uint256 engineWethBefore = weth.balanceOf(address(engine));
+        uint256 engineUsdcBefore = usdc.balanceOf(address(engine));
+        uint256 selfUsdcBefore = usdc.balanceOf(address(this));
+
         // eth call collateralized in LsETH
         MockERC20 lsEth = new MockERC20("LsETH", "LsETH", 18);
 
@@ -182,29 +221,5 @@ contract PomaceSettlementTest is EngineIntegrationFixture {
 
         assertEq(usdc.balanceOf(address(this)), selfUsdcBefore - 2000 * 1e6);
         assertEq(usdc.balanceOf(address(engine)), engineUsdcBefore + 2000 * 1e6);
-    }
-
-    function testCannotPassInInconsistentArray() public {
-        uint256[] memory ids = new uint256[](3);
-        uint256[] memory amounts = new uint256[](2);
-
-        vm.expectRevert(PM_WrongArgumentLength.selector);
-        pomace.batchSettleOptions(address(this), ids, amounts);
-    }
-
-    function testCannotMintExpiredOption() public {
-        uint256 tokenId =
-            TokenIdUtil.getTokenId(TokenType.CALL, usdcCollatProductId, uint64(block.timestamp - 1), uint64(1 * UNIT), 30 minutes);
-
-        vm.expectRevert(PM_InvalidExpiry.selector);
-        engine.mintOptionToken(address(this), tokenId, 1 * UNIT);
-    }
-
-    function testCannotMintOptionZeroExerciseWindow() public {
-        uint256 tokenId =
-            TokenIdUtil.getTokenId(TokenType.CALL, usdcCollatProductId, uint64(block.timestamp - 1), uint64(1 * UNIT), 0);
-
-        vm.expectRevert(PM_InvalidExerciseWindow.selector);
-        engine.mintOptionToken(address(this), tokenId, 1 * UNIT);
     }
 }
