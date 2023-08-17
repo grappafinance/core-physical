@@ -461,8 +461,6 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
         (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strikePrice, uint64 exerciseWindow) =
             TokenIdUtil.parseTokenId(_tokenId);
 
-        if (block.timestamp < expiry) revert PM_NotExpired();
-
         if (block.timestamp > expiry + exerciseWindow) return (address(0), 0, 0, 0, 0);
 
         (uint8 engineId, uint8 underlyingId, uint8 strikeId, uint8 collateralId) = productId.parseProductId();
