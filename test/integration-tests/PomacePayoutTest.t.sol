@@ -14,7 +14,6 @@ contract PomacePayoutTest is EngineIntegrationFixture {
     function testCanGetPayoutBeforeExpiry() public {
         uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
 
-        // vm.expectRevert(PM_NotExpired.selector);
         (address engine, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout) =
             pomace.getDebtAndPayout(tokenId, uint64(1 * UNIT));
 
