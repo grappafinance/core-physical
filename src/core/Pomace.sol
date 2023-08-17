@@ -549,8 +549,12 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
      * @param _expiry expiry timestamp
      */
     function _getSettlementPrice(address _base, address _quote, uint256 _expiry) internal view returns (uint256) {
-        (uint256 price, bool isFinalized) = oracle.getPriceAtExpiry(_base, _quote, _expiry);
-        if (!isFinalized) revert PM_PriceNotFinalized();
-        return price;
+        if (_expiry > block.timestamp) {
+            return oracle.getSpotPrice(_base, _quote);
+        } else {
+            (uint256 price, bool isFinalized) = oracle.getPriceAtExpiry(_base, _quote, _expiry);
+            if (!isFinalized) revert PM_PriceNotFinalized();
+            return price;
+        }
     }
 }
