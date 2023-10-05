@@ -24,5 +24,5 @@ enum ActionType {
     TransferCollateral, // transfer collateral directly to another subAccount
     TransferLong, // transfer long directly to another subAccount
     TransferShort, // transfer short directly to another subAccount
-    BurnShortInAccount
+    BurnShortInAccount // decreases short position in one subAccount, decreases long position in another
 }
