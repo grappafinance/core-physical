@@ -17,12 +17,11 @@ import {TokenIdUtil} from "../../libraries/TokenIdUtil.sol";
 
 // constants and types
 import "../../config/types.sol";
-import "../../config/enums.sol";
 import "../../config/constants.sol";
 import "../../config/errors.sol";
 
 /**
- * @title   BaeEngine
+ * @title   BaseEngine
  * @author  @antoncoding, @dsshap
  * @dev  common functions / flow that can be shared among MarginEngines
  */

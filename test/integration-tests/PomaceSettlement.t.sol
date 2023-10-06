@@ -7,6 +7,7 @@ import {TokenIdUtil} from "../../src/libraries/TokenIdUtil.sol";
 import {EngineIntegrationFixture} from "../fixtures/EngineIntegrationFixture.t.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 
+import "../../src/config/enums.sol";
 import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
 import "../../src/config/constants.sol";

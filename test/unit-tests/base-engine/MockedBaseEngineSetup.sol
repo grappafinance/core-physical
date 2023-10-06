@@ -16,10 +16,8 @@ import "../../../src/config/types.sol";
 
 import "../../utils/Utilities.sol";
 
-import {ActionHelper} from "../../shared/ActionHelper.sol";
-
 // solhint-disable max-states-count
-abstract contract MockedBaseEngineSetup is Test, ActionHelper, Utilities {
+abstract contract MockedBaseEngineSetup is Test, Utilities {
     MockBaseEngine internal engine;
     Pomace internal pomace;
     PhysicalOptionToken internal option;
