@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./enums.sol";
+
 /**
  * @dev struct representing the current balance for a given collateral
  * @param collateralId pomace asset id
