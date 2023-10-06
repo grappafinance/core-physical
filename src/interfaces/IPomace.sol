@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "../config/types.sol";
+import "../config/enums.sol";
+
 import {IOracle} from "./IOracle.sol";
 
 interface IPomace {

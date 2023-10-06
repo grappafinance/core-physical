@@ -10,7 +10,6 @@ import {IPomace} from "../interfaces/IPomace.sol";
 import {IPhysicalOptionTokenDescriptor} from "../interfaces/IPhysicalOptionTokenDescriptor.sol";
 
 // constants and types
-import "../config/enums.sol";
 import "../config/constants.sol";
 import "../config/errors.sol";
 

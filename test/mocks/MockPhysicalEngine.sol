@@ -9,7 +9,7 @@ import {IMarginEngine} from "../..//src/interfaces/IMarginEngine.sol";
 import {IPhysicalOptionToken} from "../../src/interfaces/IPhysicalOptionToken.sol";
 import {IPomace} from "../../src/interfaces/IPomace.sol";
 
-import {ActionArgs} from "../../src/config/types.sol";
+import {ActionArgs} from "../types.sol";
 
 /**
  * @title   MockPhysicalEngine

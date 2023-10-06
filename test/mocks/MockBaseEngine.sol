@@ -13,6 +13,8 @@ import "../../src/config/enums.sol";
 import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
 
+import "../types.sol";
+
 /**
  * @title   MockBaseEngine
  * @notice  Implement execute to test all flow in BaseEngine

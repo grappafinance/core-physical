@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {EngineIntegrationFixture} from "../fixtures/EngineIntegrationFixture.t.sol";
 
+import "../../src/config/enums.sol";
 import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
 import "../../src/config/constants.sol";

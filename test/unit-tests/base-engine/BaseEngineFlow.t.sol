@@ -10,6 +10,8 @@ import "../../../src/config/types.sol";
 import "../../../src/config/constants.sol";
 import "../../../src/config/errors.sol";
 
+import "../../types.sol";
+
 contract BaseEngineFlow is MockedBaseEngineSetup {
     address public random = address(0xaabb);
 
@@ -39,7 +41,8 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
         uint256 depositAmount = 1000 * 1e6;
 
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
+        actions[0] =
+            ActionArgs({action: ActionType.AddCollateral, data: abi.encode(address(this), uint80(depositAmount), usdcId)});
         engine.execute(address(this), actions);
 
         uint256 engineBalanceAfter = usdc.balanceOf(address(engine));
@@ -51,7 +54,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
     function testCannotAddCollatFromOthers() public {
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createAddCollateralAction(usdcId, random, 100);
+        actions[0] = ActionArgs({action: ActionType.AddCollateral, data: abi.encode(random, uint80(100), usdcId)});
         vm.expectRevert(BM_InvalidFromAddress.selector);
         engine.execute(address(this), actions);
     }
@@ -60,7 +63,8 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
         // prepare
         uint256 depositAmount = 800 * 1e6;
         ActionArgs[] memory _actions = new ActionArgs[](1);
-        _actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
+        _actions[0] =
+            ActionArgs({action: ActionType.AddCollateral, data: abi.encode(address(this), uint80(depositAmount), usdcId)});
         engine.execute(address(this), _actions);
 
         // check before
@@ -69,7 +73,8 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // remove collateral
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createRemoveCollateralAction(depositAmount, usdcId, address(this));
+        actions[0] =
+            ActionArgs({action: ActionType.RemoveCollateral, data: abi.encode(uint80(depositAmount), address(this), usdcId)});
         engine.execute(address(this), actions);
 
         uint256 engineBalanceAfter = usdc.balanceOf(address(engine));
@@ -83,12 +88,14 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
         // prepare
         uint256 withdrawAmount = 800 * 1e6;
         ActionArgs[] memory _actions = new ActionArgs[](1);
-        _actions[0] = createAddCollateralAction(usdcId, address(this), withdrawAmount);
+        _actions[0] =
+            ActionArgs({action: ActionType.AddCollateral, data: abi.encode(address(this), uint80(withdrawAmount), usdcId)});
         engine.execute(address(this), _actions);
 
         // remove collateral should revert
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createRemoveCollateralAction(withdrawAmount + 1, usdcId, address(this));
+        actions[0] =
+            ActionArgs({action: ActionType.RemoveCollateral, data: abi.encode(uint80(withdrawAmount + 1), address(this), usdcId)});
         vm.expectRevert(stdError.arithmeticError);
         engine.execute(address(this), actions);
     }
@@ -98,7 +105,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
         uint256 tokenId = _getDefaultCallId();
 
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createMintAction(tokenId, address(this), amount);
+        actions[0] = ActionArgs({action: ActionType.MintShort, data: abi.encode(tokenId, address(this), uint64(amount))});
         engine.execute(address(this), actions);
 
         assertEq(option.balanceOf(address(this), tokenId), amount);
@@ -110,12 +117,12 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // prepare mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](1);
-        _actions[0] = createMintAction(tokenId, address(this), amount);
+        _actions[0] = ActionArgs({action: ActionType.MintShort, data: abi.encode(tokenId, address(this), uint64(amount))});
         engine.execute(address(this), _actions);
 
         // burn
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createBurnAction(tokenId, address(this), amount);
+        actions[0] = ActionArgs({action: ActionType.BurnShort, data: abi.encode(tokenId, address(this), uint64(amount))});
         engine.execute(address(this), actions);
 
         assertEq(option.balanceOf(address(this), tokenId), 0);
@@ -127,7 +134,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // burn
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createBurnAction(tokenId, random, amount);
+        actions[0] = ActionArgs({action: ActionType.BurnShort, data: abi.encode(tokenId, random, uint64(amount))});
         vm.expectRevert(BM_InvalidFromAddress.selector);
         engine.execute(address(this), actions);
     }
@@ -138,7 +145,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // execute add long
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createAddLongAction(tokenId, amount, address(0));
+        actions[0] = ActionArgs({action: ActionType.AddLong, data: abi.encode(tokenId, uint64(amount), address(0))});
 
         vm.expectRevert(BM_InvalidFromAddress.selector);
         engine.execute(address(this), actions);
@@ -150,14 +157,14 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // prepare: mint tokens
         ActionArgs[] memory _actions = new ActionArgs[](1);
-        _actions[0] = createMintAction(tokenId, address(this), amount);
+        _actions[0] = ActionArgs({action: ActionType.MintShort, data: abi.encode(tokenId, address(this), uint64(amount))});
         engine.execute(address(this), _actions);
 
         option.setApprovalForAll(address(engine), true);
 
         // add long into the account
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createAddLongAction(tokenId, amount, address(this));
+        actions[0] = ActionArgs({action: ActionType.AddLong, data: abi.encode(tokenId, uint64(amount), address(this))});
         engine.execute(address(this), actions);
 
         assertEq(option.balanceOf(address(this), tokenId), 0);
@@ -170,7 +177,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // prepare: mint tokens to engine
         ActionArgs[] memory _actions = new ActionArgs[](1);
-        _actions[0] = createMintAction(tokenId, address(engine), amount);
+        _actions[0] = ActionArgs({action: ActionType.MintShort, data: abi.encode(tokenId, address(engine), uint64(amount))});
         engine.execute(address(this), _actions);
 
         assertEq(option.balanceOf(address(this), tokenId), 0);
@@ -178,7 +185,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // add long
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createRemoveLongAction(tokenId, amount, address(this));
+        actions[0] = ActionArgs({action: ActionType.RemoveLong, data: abi.encode(tokenId, uint64(amount), address(this))});
         engine.execute(address(this), actions);
 
         assertEq(option.balanceOf(address(this), tokenId), amount);
@@ -192,7 +199,7 @@ contract BaseEngineFlow is MockedBaseEngineSetup {
 
         // execute merge
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createSettleAction();
+        actions[0] = ActionArgs({action: ActionType.SettleAccount, data: ""});
 
         vm.expectEmit(false, false, false, true, address(engine));
         emit AccountSettledSingle(address(this), usdcId, amount);

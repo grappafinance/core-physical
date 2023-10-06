@@ -3,8 +3,27 @@ pragma solidity >=0.8.0;
 
 import {Vm} from "forge-std/Vm.sol";
 
+import {TokenIdUtil} from "../../src/libraries/TokenIdUtil.sol";
+import {TokenType} from "../../src/config/enums.sol";
+
 //common utilities for forge tests
 abstract contract Utilities {
+    function getTokenId(TokenType tokenType, uint32 productId, uint256 expiry, uint256 strike, uint256 exerciseWindow)
+        internal
+        pure
+        returns (uint256 tokenId)
+    {
+        tokenId = TokenIdUtil.getTokenId(tokenType, productId, uint64(expiry), uint64(strike), uint64(exerciseWindow));
+    }
+
+    function parseTokenId(uint256 tokenId)
+        internal
+        pure
+        returns (TokenType tokenType, uint32 productId, uint64 expiry, uint64 strike, uint64 exerciseWindow)
+    {
+        return TokenIdUtil.parseTokenId(tokenId);
+    }
+
     // solhint-disable max-line-length
     function predictAddress(address _origin, uint256 _nonce) public pure returns (address) {
         if (_nonce == 0x00) {

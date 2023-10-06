@@ -7,6 +7,8 @@ import {MockedBaseEngineSetup} from "./base-engine/MockedBaseEngineSetup.sol";
 import "../../src/config/types.sol";
 import "../../src/config/errors.sol";
 
+import "../types.sol";
+
 contract PomaceAccessTest is MockedBaseEngineSetup {
     uint256 private depositAmount = 100 * 1e6;
 
@@ -104,7 +106,8 @@ contract PomaceAccessTest is MockedBaseEngineSetup {
     function _assertCanAccessAccount(address subAccountId, bool _canAccess) internal {
         // we can update the account now
         ActionArgs[] memory actions = new ActionArgs[](1);
-        actions[0] = createAddCollateralAction(usdcId, address(this), depositAmount);
+        actions[0] =
+            ActionArgs({action: ActionType.AddCollateral, data: abi.encode(address(this), uint80(depositAmount), usdcId)});
 
         if (!_canAccess) vm.expectRevert(NoAccess.selector);
 

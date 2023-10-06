@@ -9,7 +9,6 @@ import {BaseEngine} from "../BaseEngine.sol";
 import {TokenIdUtil} from "../../../libraries/TokenIdUtil.sol";
 
 // // constants and types
-import "../../../config/enums.sol";
 import "../../../config/errors.sol";
 
 /**
