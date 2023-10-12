@@ -11,6 +11,19 @@ import "../../src/config/constants.sol";
  * @dev test getDebtAndPayout function on different token types
  */
 contract PomacePayoutTest is EngineIntegrationFixture {
+    function testCanGetPayoutBeforeExpiry() public {
+        uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
+
+        (address engine, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout) =
+            pomace.getDebtAndPayout(tokenId, uint64(1 * UNIT));
+
+        assertEq(engine, address(engine));
+        assertEq(debtId, usdcId);
+        assertEq(debt, 2000 * 1e6);
+        assertEq(payoutId, wethId);
+        assertEq(payout, 1 * 1e18);
+    }
+    
     function testPayoutETHCollatCall() public {
         uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
         vm.warp(expiry);
