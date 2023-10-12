@@ -35,9 +35,18 @@ contract PomaceSettlementTestBase is EngineIntegrationFixture {
 }
 
 /**
- * @dev test getPayout function on different token types
+ * @dev test settle option function on different token types
  */
 contract PomaceSettlementTest is PomaceSettlementTestBase {
+    function testCannotSettleOptionBeforeExpiry() public {
+        uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
+
+        vm.warp(expiry - 1);
+
+        vm.expectRevert(PM_NotExpired.selector);
+        pomace.settleOption(address(this), tokenId, 1 * UNIT);
+    }
+
     function testSettleETHCollatCall() public {
         uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
 
