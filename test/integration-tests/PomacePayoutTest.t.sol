@@ -23,7 +23,7 @@ contract PomacePayoutTest is EngineIntegrationFixture {
         assertEq(payoutId, wethId);
         assertEq(payout, 1 * 1e18);
     }
-    
+
     function testPayoutETHCollatCall() public {
         uint256 tokenId = _mintCallOption(2000 * 1e6, wethCollatProductId, 1 * UNIT);
         vm.warp(expiry);
