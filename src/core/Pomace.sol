@@ -401,6 +401,9 @@ contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeab
         internal
         returns (Balance memory, Balance memory)
     {
+        (,, uint64 expiry,,) = TokenIdUtil.parseTokenId(_tokenId);
+        if (block.timestamp < expiry) revert PM_NotExpired();
+
         (address engine_, uint8 debtId, uint256 debt, uint8 payoutId, uint256 payout) =
             getDebtAndPayout(_tokenId, _amount.toUint64());
 
