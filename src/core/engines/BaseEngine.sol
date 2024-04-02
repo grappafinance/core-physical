@@ -66,7 +66,6 @@ abstract contract BaseEngine {
      *                       Constructor
      * ========================================================= *
      */
-
     constructor(address _pomace, address _optionToken) {
         pomace = IPomace(_pomace);
         optionToken = IPhysicalOptionToken(_optionToken);

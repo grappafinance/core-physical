@@ -32,7 +32,6 @@ import "../config/errors.sol";
  * @author  @dsshap, @antoncoding
  * @dev     This contract serves as the registry of the system who system.
  */
-
 contract Pomace is OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
     using BalanceUtil for Balance[];
     using FixedPointMathLib for uint256;
