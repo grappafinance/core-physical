@@ -21,6 +21,11 @@ else
     exit 1
 fi
 
+echo "Resume? [y/n]..."
+read resume
+
+echo ""
+
 echo "Broadcast? [y/n]..."
 read broadcast
 
@@ -31,22 +36,13 @@ read verify
 
 echo ""
 
-echo "Profile? [default/optimized]..."
-read profile
-
-if [ "$profile" = "default" ] || [ "$profile" = "optimized" ]; then
-  export FOUNDRY_PROFILE=$profile
-  echo ""
-  echo "Using profile: $FOUNDRY_PROFILE"
-  echo ""
-else
-  echo ""
-  echo "Invalid profile! 🛑🛑🛑"
-  exit 0
-fi
-
 ARGS="--rpc-url https://$network.infura.io/v3/$INFURA_API_KEY"
 ARGS="$ARGS --private-key $PRIVATE_KEY"
+
+if [ "$resume" = "y" ]
+then
+  ARGS="$ARGS --resume"
+fi
 
 if [ "$broadcast" = "y" ]
 then

@@ -74,7 +74,4 @@ contract Deploy is Script, Utilities {
 
         console.log("\n---- Core deployment ended ----\n");
     }
-
-    // add a function prefixed with test here so forge coverage will ignore this file
-    function testChill() public {}
 }
